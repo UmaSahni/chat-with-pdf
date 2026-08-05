@@ -22,6 +22,9 @@ export default function Home() {
   // File upload state
   const [uploadDocType, setUploadDocType] = useState('textbook');
   const [uploadStatus, setUploadStatus] = useState('');
+  // Custom modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const fileInputRef = useRef(null);
 
   // Chat inputs
@@ -93,20 +96,27 @@ export default function Home() {
   };
 
   // Create new Session in MongoDB Atlas
-  const handleCreateSession = async () => {
-    const name = prompt('Enter a name for your new workspace:');
-    if (!name || !name.trim()) return;
-    
+  const handleCreateSession = () => {
+    setNewWorkspaceName('');
+    setShowCreateModal(true);
+  };
+
+  const handleCreateWorkspaceSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!newWorkspaceName || !newWorkspaceName.trim()) return;
+
     try {
       const res = await fetch('http://localhost:5001/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: name.trim() })
+        body: JSON.stringify({ title: newWorkspaceName.trim() })
       });
       const data = await res.json();
       if (data.success) {
         await fetchSessions();
         setActiveSessionId(data.session._id);
+        setShowCreateModal(false);
+        setNewWorkspaceName('');
       }
     } catch (e) {
       console.error("Error creating session in database:", e);
@@ -510,6 +520,44 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      {/* Nice Glassmorphic Modal for Workspace Creation */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#0b1329]/95 border border-outline-variant rounded-xl p-6 w-full max-w-md shadow-2xl animate-fade-in relative z-[101]">
+            <h3 className="text-base font-bold text-on-surface mb-1">Create Workspace</h3>
+            <p className="text-xs text-outline mb-4">Enter a name for your new workspace to get started.</p>
+            
+            <form onSubmit={handleCreateWorkspaceSubmit} className="space-y-4">
+              <input
+                type="text"
+                value={newWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                placeholder="e.g. Physics Chapter 3"
+                autoFocus
+                className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/60"
+              />
+              
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 rounded text-xs font-semibold text-on-surface-variant hover:bg-surface-container transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newWorkspaceName.trim()}
+                  className="px-4 py-2 rounded bg-primary text-on-primary text-xs font-semibold glow-button hover:bg-primary/95 transition-all disabled:opacity-50"
+                >
+                  Create
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
