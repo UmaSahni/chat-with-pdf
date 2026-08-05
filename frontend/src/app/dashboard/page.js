@@ -312,7 +312,10 @@ export default function Dashboard() {
       {/* TopNavBar */}
       <header className="bg-surface-container-low flex justify-between items-center px-container-padding h-16 w-full fixed top-0 z-50 backdrop-blur-md border-b border-outline-variant">
         <div className="flex items-center gap-8">
-          <div className="text-lg font-bold text-primary tracking-tight font-mono">VERITAS AI</div>
+          <div className="text-lg font-bold text-primary tracking-tight font-mono flex items-center gap-2">
+            <span>VERITAS AI</span>
+            <span className="text-[9px] font-mono text-outline border border-outline-variant px-1.5 py-0.5 rounded normal-case font-normal select-none">built by Uma Sahni</span>
+          </div>
           <div className="text-xs text-outline bg-surface-container px-3 py-1 rounded border border-outline-variant font-mono">
             Active Workspace: <span className="text-primary-fixed">{activeSession.name}</span>
           </div>
