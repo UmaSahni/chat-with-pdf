@@ -8,14 +8,12 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Load client state and user session
   useEffect(() => {
     setIsClient(true);
     const savedUser = localStorage.getItem('veritas_user');
     if (savedUser) {
       try {
-        const user = JSON.parse(savedUser);
-        setCurrentUser(user);
+        setCurrentUser(JSON.parse(savedUser));
         router.push('/dashboard');
       } catch (e) {
         console.error("Failed to parse user session", e);
@@ -26,7 +24,7 @@ export default function Home() {
   if (!isClient) {
     return (
       <div className="bg-[#0b1326] h-screen w-screen flex items-center justify-center text-primary font-mono animate-pulse">
-        Loading Veritas AI Workspaces...
+        Loading Veritas AI...
       </div>
     );
   }
@@ -80,10 +78,10 @@ function LandingPage({ onLoginSuccess }) {
   };
 
   return (
-    <div className="bg-[#0b1326] min-h-screen text-on-surface font-body overflow-x-hidden relative flex flex-col justify-between">
-      {/* Dynamic background mesh */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/5 blur-[120px] animate-pulse pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary-fixed-dim/5 blur-[120px] animate-pulse pointer-events-none"></div>
+    <div className="w-full bg-[#0b1326] text-on-surface font-body relative flex flex-col justify-between min-h-screen">
+      {/* Decorative glows */}
+      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full bg-primary-fixed-dim/5 blur-[120px] pointer-events-none"></div>
 
       {/* Landing Header */}
       <header className="px-8 py-6 flex justify-between items-center max-w-7xl mx-auto w-full z-20">
@@ -102,7 +100,7 @@ function LandingPage({ onLoginSuccess }) {
       {/* Hero Section */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-8 py-12 flex flex-col lg:flex-row items-center gap-12 z-10">
         <div className="flex-1 space-y-6 text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary font-mono animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary font-mono">
             <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
             Grounded Multi-Document RAG
           </div>
@@ -132,7 +130,7 @@ function LandingPage({ onLoginSuccess }) {
         </div>
 
         {/* Live RAG Mockup Sandbox */}
-        <div id="sandbox" className="flex-1 w-full max-w-xl animate-fade-in">
+        <div id="sandbox" className="flex-1 w-full max-w-xl">
           <div className="glass-panel border border-outline-variant/60 rounded-xl overflow-hidden shadow-2xl bg-[#0b1326]/60 backdrop-blur-md">
             {/* Header bar */}
             <div className="bg-surface-container-low border-b border-outline-variant px-4 py-3 flex items-center justify-between">
@@ -184,7 +182,7 @@ function LandingPage({ onLoginSuccess }) {
         </div>
       </main>
 
-      {/* Metrics / Statistics Section */}
+      {/* Metrics Section */}
       <section className="max-w-7xl mx-auto w-full px-8 py-12 border-t border-outline-variant/20 z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           <div className="p-4 rounded-xl bg-surface-container-low/10 border border-outline-variant/40">
@@ -214,25 +212,25 @@ function LandingPage({ onLoginSuccess }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur hover:translate-y-[-2px]">
+          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur">
             <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">lock</span>
             <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">Isolated Workspaces</h3>
             <p className="text-xs text-outline leading-relaxed">Accounts are completely isolated in MongoDB Atlas. One user can never see or search another's workspaces.</p>
           </div>
 
-          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur hover:translate-y-[-2px]">
+          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur">
             <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">find_in_page</span>
             <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">Source Page Citations</h3>
             <p className="text-xs text-outline leading-relaxed">Every answer is backed by a citation card. Click to open the physical PDF page directly in a new tab.</p>
           </div>
 
-          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur hover:translate-y-[-2px]">
+          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur">
             <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">filter_list</span>
             <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">PDF Document Filters</h3>
             <p className="text-xs text-outline leading-relaxed">Scope query parameters instantly. Target a specific PDF or query across all files concurrently.</p>
           </div>
 
-          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur hover:translate-y-[-2px]">
+          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur">
             <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">analytics</span>
             <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">Vector Ingestion</h3>
             <p className="text-xs text-outline leading-relaxed">Extract text, create high-dimensional embeddings, and upsert vectors to Pinecone under dedicated namespaces.</p>
@@ -240,7 +238,7 @@ function LandingPage({ onLoginSuccess }) {
         </div>
       </section>
 
-      {/* RAG Workflow / Pipeline Steps */}
+      {/* RAG Workflow Pipeline */}
       <section className="max-w-7xl mx-auto w-full px-8 py-16 border-t border-outline-variant/20 z-10 bg-[#070d1a]/20">
         <div className="text-center max-w-xl mx-auto mb-12">
           <h2 className="text-2xl font-bold text-on-surface font-mono uppercase tracking-wider">How it works</h2>
@@ -278,7 +276,7 @@ function LandingPage({ onLoginSuccess }) {
         </div>
       </section>
 
-      {/* Accordions / FAQs Section */}
+      {/* FAQ Section */}
       <section className="max-w-3xl mx-auto w-full px-8 py-16 border-t border-outline-variant/20 z-10">
         <div className="text-center mb-10">
           <h2 className="text-2xl font-bold text-on-surface font-mono uppercase tracking-wider">Frequently Asked Questions</h2>
@@ -288,7 +286,7 @@ function LandingPage({ onLoginSuccess }) {
           <details className="group border border-outline-variant/60 rounded-lg bg-[#0b1326]/50 p-4 transition-all">
             <summary className="flex justify-between items-center cursor-pointer text-xs font-bold font-mono text-on-surface select-none">
               <span>Is my PDF data shared with anyone else?</span>
-              <span className="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+              <span className="material-symbols-outlined group-open:rotate-180 transition-transform text-sm">expand_more</span>
             </summary>
             <p className="text-xs text-outline leading-relaxed mt-3 pt-3 border-t border-outline-variant/30 font-mono">
               No. Veritas AI enforces database-level user isolation. Workspaces are scoped using a secure `userId` key, and vectors are queried under unique Pinecone namespaces.
@@ -298,7 +296,7 @@ function LandingPage({ onLoginSuccess }) {
           <details className="group border border-outline-variant/60 rounded-lg bg-[#0b1326]/50 p-4 transition-all">
             <summary className="flex justify-between items-center cursor-pointer text-xs font-bold font-mono text-on-surface select-none">
               <span>How does the PDF Page link work?</span>
-              <span className="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+              <span className="material-symbols-outlined group-open:rotate-180 transition-transform text-sm">expand_more</span>
             </summary>
             <p className="text-xs text-outline leading-relaxed mt-3 pt-3 border-t border-outline-variant/30 font-mono">
               When indexing your file, the system keeps track of the original page number of each block. When a query is answered, clicking the link opens that PDF page directly using standard PDF hashes.
@@ -308,7 +306,7 @@ function LandingPage({ onLoginSuccess }) {
           <details className="group border border-outline-variant/60 rounded-lg bg-[#0b1326]/50 p-4 transition-all">
             <summary className="flex justify-between items-center cursor-pointer text-xs font-bold font-mono text-on-surface select-none">
               <span>What models are used?</span>
-              <span className="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+              <span className="material-symbols-outlined group-open:rotate-180 transition-transform text-sm">expand_more</span>
             </summary>
             <p className="text-xs text-outline leading-relaxed mt-3 pt-3 border-t border-outline-variant/30 font-mono">
               Veritas AI utilizes `gemini-embedding-001` for embedding vectors and `gemini-3.1-pro-preview` to answer questions securely and accurately.
@@ -317,7 +315,7 @@ function LandingPage({ onLoginSuccess }) {
         </div>
       </section>
 
-      {/* Landing Footer */}
+      {/* Footer */}
       <footer className="px-8 py-6 border-t border-outline-variant/30 flex justify-between items-center max-w-7xl mx-auto w-full text-[10px] font-mono text-outline z-20">
         <div>VERITAS AI &copy; 2026. ALL RIGHTS RESERVED.</div>
         <div>POWERED BY GEMINI & PINECONE</div>
@@ -325,9 +323,8 @@ function LandingPage({ onLoginSuccess }) {
 
       {/* Auth Modal Overlay */}
       {showAuthModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <div className="bg-[#0b1326]/95 border border-outline-variant rounded-xl p-8 w-full max-w-md shadow-2xl relative z-[101]">
-            {/* Close button */}
             <button
               onClick={() => setShowAuthModal(false)}
               className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface transition-colors"
@@ -340,7 +337,6 @@ function LandingPage({ onLoginSuccess }) {
               <p className="text-[10px] text-outline mt-1 font-mono uppercase tracking-wider">Access your Grounded Workspace</p>
             </div>
 
-            {/* Tab switchers */}
             <div className="flex bg-surface-container rounded-lg p-1 mb-6 border border-outline-variant">
               <button
                 onClick={() => { setIsLogin(true); setError(''); }}
