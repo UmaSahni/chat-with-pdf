@@ -11,8 +11,7 @@ import { RunnableSequence } from '@langchain/core/runnables';
 
 const embeddings = new GoogleGenerativeAIEmbeddings({
     apiKey: process.env.GEMINI_API_KEY,
-    model: 'text-embedding-004',
-    outputDimensionality: 3072,
+    model: 'gemini-embedding-001',
 });
 
 // Then search the enbedding in Vector DB

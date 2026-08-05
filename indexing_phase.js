@@ -8,9 +8,10 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import { PineconeStore } from '@langchain/pinecone';
 
 
-export const indexing = async (fileBuffer, fileName, docType, namespace) => {
+export const indexing = async (fileBuffer, fileName, docType, namespace, onProgress = () => {}) => {
     let rawDocs;
     if (fileBuffer) {
+        onProgress('parsing');
         // Load PDF from buffer (Node Blob)
         const blob = new Blob([fileBuffer], { type: 'application/pdf' });
         const pdfLoader = new PDFLoader(blob);
@@ -25,6 +26,7 @@ export const indexing = async (fileBuffer, fileName, docType, namespace) => {
         namespace = 'default';
     }
 
+    onProgress('chunking');
     const textSplitter = new RecursiveCharacterTextSplitter({
         chunkSize: 1000,
         chunkOverlap: 200,
@@ -42,13 +44,14 @@ export const indexing = async (fileBuffer, fileName, docType, namespace) => {
         };
     });
 
+    onProgress('vectorizing');
     // Configure the embedding (Dimension: 3072, matching the Pinecone index)
     const embeddings = new GoogleGenerativeAIEmbeddings({
         apiKey: process.env.GEMINI_API_KEY,
-        model: 'text-embedding-004',
-        outputDimensionality: 3072,
+        model: 'gemini-embedding-001',
     });
 
+    onProgress('storing');
     // Configure Pinecone
     const pinecone = new Pinecone();
     const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX_NAME);
@@ -60,6 +63,8 @@ export const indexing = async (fileBuffer, fileName, docType, namespace) => {
         namespace,
         maxConcurrency: 5,
     });
+    
+    onProgress('done');
     console.log("Upload completed.");
 }
 
