@@ -10,10 +10,15 @@
   --foreground: #dae2fd;
 }
 
+html {
+  overflow-y: auto;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
+  overflow: visible;
 }
 
 .glass-panel {
