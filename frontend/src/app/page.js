@@ -27,6 +27,7 @@ export default function Home() {
   // Chat inputs
   const [question, setQuestion] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [chatHistory, setChatHistory] = useState([]);
   
   // Right pane details (current active snippets)
   const [activeSnippets, setActiveSnippets] = useState([]);
@@ -397,7 +398,7 @@ export default function Home() {
           {/* Messages Scroll Area */}
           <div className="flex-1 p-8 overflow-y-auto pb-44 space-y-6">
             <div className="max-w-2xl mx-auto space-y-6">
-              {activeSession.chatHistory.map((msg, i) => (
+              {chatHistory.map((msg, i) => (
                 <div 
                   key={i} 
                   className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
