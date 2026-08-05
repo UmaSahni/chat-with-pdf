@@ -41,6 +41,30 @@ app.use(cors());
 app.use(express.json());
 
 // Serve uploaded PDFs statically so the frontend can retrieve them
+// Smart static PDF resolution route to resolve files with/without timestamp prefix
+app.get('/uploads/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const directPath = path.join(UPLOADS_DIR, filename);
+
+    // 1. Try to serve directly
+    if (fs.existsSync(directPath)) {
+        return res.sendFile(path.resolve(directPath));
+    }
+
+    // 2. Fallback: Search for timestamp-prefixed files (e.g. 1785953089462-Profile.pdf)
+    try {
+        const files = fs.readdirSync(UPLOADS_DIR);
+        const matchedFile = files.find(f => f === filename || f.endsWith(`-${filename}`));
+        if (matchedFile) {
+            return res.sendFile(path.resolve(path.join(UPLOADS_DIR, matchedFile)));
+        }
+    } catch (err) {
+        console.error("Error during uploads directory fallback search:", err);
+    }
+
+    res.status(404).send(`Cannot GET /uploads/${filename}`);
+});
+
 app.use('/uploads', express.static('uploads'));
 
 // Health check
