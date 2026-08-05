@@ -294,9 +294,9 @@ export default function Home() {
               onChange={(e) => setUploadDocType(e.target.value)}
               className="bg-surface-container border border-outline-variant text-xs text-on-surface rounded px-2 py-1.5 focus:outline-none"
             >
-              <option value="textbook">Textbook</option>
-              <option value="question_paper">Question Paper</option>
-              <option value="general">General PDF</option>
+              <option value="textbook">Reference Material</option>
+              <option value="question_paper">Question/Task Sheet</option>
+              <option value="general">General Document</option>
             </select>
             <input 
               type="file" 
@@ -376,7 +376,7 @@ export default function Home() {
               >
                 <div className="flex justify-between items-start mb-1">
                   <span className="text-[10px] font-mono bg-surface-container-high text-primary px-1.5 py-0.5 rounded uppercase">
-                    {file.docType}
+                    {file.docType === 'textbook' ? 'Reference' : file.docType === 'question_paper' ? 'Questions' : 'Document'}
                   </span>
                 </div>
                 <h3 className="font-semibold text-on-surface text-xs truncate" title={file.name}>
@@ -387,7 +387,7 @@ export default function Home() {
 
             {activeSession.files.length === 0 && (
               <div className="text-xs text-outline italic text-center py-6">
-                No documents uploaded. Upload a textbook or question paper to start.
+                No documents uploaded. Upload reference materials or query files to start.
               </div>
             )}
           </div>
@@ -454,9 +454,9 @@ export default function Home() {
               onChange={(e) => setDocTypeFilter(e.target.value)}
               className="bg-transparent border-none text-xs text-primary font-mono focus:outline-none focus:ring-0 mr-1"
             >
-              <option value="all">Filter: All</option>
-              <option value="textbook">Filter: Books Only</option>
-              <option value="question_paper">Filter: Exam Papers</option>
+              <option value="all">Filter: All Docs</option>
+              <option value="textbook">Filter: References Only</option>
+              <option value="question_paper">Filter: Questions Only</option>
             </select>
             <div className="h-4 w-px bg-outline-variant"></div>
             
