@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   
   // App states
   const [sessions, setSessions] = useState([]);
@@ -28,16 +29,37 @@ export default function Home() {
   // Right pane details (current active snippets)
   const [activeSnippets, setActiveSnippets] = useState([]);
 
-  // Ensure client-side only execution and fetch workspaces from MongoDB Atlas
+  // Load client state and user session
   useEffect(() => {
     setIsClient(true);
-    fetchSessions();
+    const savedUser = localStorage.getItem('veritas_user');
+    if (savedUser) {
+      try {
+        setCurrentUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error("Failed to parse user session", e);
+      }
+    }
   }, []);
+
+  // Sync workspaces whenever currentUser state changes
+  useEffect(() => {
+    if (currentUser) {
+      fetchSessions();
+    } else {
+      setSessions([]);
+      setChatHistory([]);
+      setActiveSessionId('');
+    }
+  }, [currentUser]);
 
   // Fetch workspaces (sessions) from the database
   const fetchSessions = async () => {
+    if (!currentUser) return;
     try {
-      const res = await fetch('http://localhost:5001/api/sessions');
+      const res = await fetch('http://localhost:5001/api/sessions', {
+        headers: { 'x-user-id': currentUser.id }
+      });
       const data = await res.json();
       if (data.success) {
         const formatted = data.sessions.map(s => ({
@@ -61,14 +83,17 @@ export default function Home() {
 
   // Fetch messages (chat log) for the active session when it changes
   useEffect(() => {
-    if (activeSessionId) {
+    if (activeSessionId && currentUser) {
       fetchMessages(activeSessionId);
     }
-  }, [activeSessionId]);
+  }, [activeSessionId, currentUser]);
 
   const fetchMessages = async (sessionId) => {
+    if (!currentUser) return;
     try {
-      const res = await fetch(`http://localhost:5001/api/sessions/${sessionId}/messages`);
+      const res = await fetch(`http://localhost:5001/api/sessions/${sessionId}/messages`, {
+        headers: { 'x-user-id': currentUser.id }
+      });
       const data = await res.json();
       if (data.success) {
         setChatHistory(data.messages);
@@ -96,12 +121,15 @@ export default function Home() {
 
   const handleCreateWorkspaceSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!newWorkspaceName || !newWorkspaceName.trim()) return;
+    if (!newWorkspaceName || !newWorkspaceName.trim() || !currentUser) return;
 
     try {
       const res = await fetch('http://localhost:5001/api/sessions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser.id
+        },
         body: JSON.stringify({ title: newWorkspaceName.trim() })
       });
       const data = await res.json();
@@ -119,11 +147,12 @@ export default function Home() {
   // Delete Session from MongoDB Atlas
   const handleDeleteSession = async (sid, event) => {
     event.stopPropagation();
-    if (!confirm('Are you sure you want to delete this workspace? All uploaded references and chat history will be lost.')) return;
+    if (!confirm('Are you sure you want to delete this workspace? All uploaded references and chat history will be lost.') || !currentUser) return;
     
     try {
       const res = await fetch(`http://localhost:5001/api/sessions/${sid}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'x-user-id': currentUser.id }
       });
       const data = await res.json();
       if (data.success) {
@@ -147,7 +176,7 @@ export default function Home() {
   // File Ingestion Handler (Uploads to disk, Indexes, and saves metadata to MongoDB)
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file || !currentUser) return;
 
     setUploadStatus('Uploading PDF...');
     const formData = new FormData();
@@ -158,6 +187,7 @@ export default function Home() {
     try {
       const res = await fetch('http://localhost:5001/api/upload', {
         method: 'POST',
+        headers: { 'x-user-id': currentUser.id },
         body: formData
       });
 
@@ -224,7 +254,7 @@ export default function Home() {
 
   // Core Query RAG execution (Queries Pinecone and logs conversation in MongoDB)
   const handleQuery = async (queryText) => {
-    if (!queryText.trim() || isProcessing) return;
+    if (!queryText.trim() || isProcessing || !currentUser) return;
     setIsProcessing(true);
 
     // Add user message to local state immediately for instant UI responsiveness
@@ -235,7 +265,10 @@ export default function Home() {
     try {
       const res = await fetch('http://localhost:5001/api/query', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': currentUser.id
+        },
         body: JSON.stringify({
           question: queryText,
           namespace: activeSession.namespace,
@@ -257,11 +290,20 @@ export default function Home() {
     }
   };
 
-  if (!isClient || !activeSession) {
+  if (!isClient) {
     return (
       <div className="bg-[#0b1326] h-screen w-screen flex items-center justify-center text-primary font-mono">
         Loading Veritas AI Workspaces...
       </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <AuthPage onLoginSuccess={(user) => {
+        localStorage.setItem('veritas_user', JSON.stringify(user));
+        setCurrentUser(user);
+      }} />
     );
   }
 
@@ -303,12 +345,20 @@ export default function Home() {
               {uploadStatus || 'Upload PDF'}
             </button>
           </div>
-          <button className="text-on-surface-variant hover:text-primary transition-colors">
-            <span className="material-symbols-outlined align-middle">settings</span>
+          <button 
+            onClick={() => {
+              localStorage.removeItem('veritas_user');
+              setCurrentUser(null);
+            }}
+            className="text-on-surface-variant hover:text-error transition-colors font-mono text-xs flex items-center gap-1 border border-outline-variant px-2.5 py-1.5 rounded bg-surface-container-low hover:bg-surface-container"
+            title="Log Out"
+          >
+            <span className="material-symbols-outlined text-xs">logout</span>
+            <span>Exit</span>
           </button>
           <div className="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-xs font-bold text-on-primary-container">
-              US
+            <div className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container uppercase">
+              {currentUser?.email?.slice(0, 2) || 'US'}
             </div>
           </div>
         </div>
@@ -548,6 +598,117 @@ export default function Home() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AuthPage({ onLoginSuccess }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      setError('Please fill in all fields');
+      return;
+    }
+    setError('');
+    setLoading(true);
+
+    const url = isLogin ? 'http://localhost:5001/api/auth/login' : 'http://localhost:5001/api/auth/signup';
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password: password.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        onLoginSuccess(data.user);
+      } else {
+        setError(data.error || 'Authentication failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Connection error. Is Express running on port 5001?');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#0b1326] h-screen w-screen flex items-center justify-center font-body text-sm relative overflow-hidden">
+      {/* Background gradients */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-[120px]"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-primary-fixed-dim/10 blur-[120px]"></div>
+
+      <div className="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10 border border-outline-variant/60 animate-fade-in bg-[#0b1326]/80 backdrop-blur-md">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-primary tracking-tight">Veritas AI</h2>
+          <p className="text-xs text-outline mt-1 font-mono uppercase tracking-wider">Multi-Document RAG workspace</p>
+        </div>
+
+        {/* Tab switchers */}
+        <div className="flex bg-surface-container rounded-lg p-1 mb-6 border border-outline-variant">
+          <button
+            onClick={() => { setIsLogin(true); setError(''); }}
+            className={`flex-1 py-2 text-xs font-semibold rounded transition-all ${isLogin ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => { setIsLogin(false); setError(''); }}
+            className={`flex-1 py-2 text-xs font-semibold rounded transition-all ${!isLogin ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
+          >
+            Create Account
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-error-container text-on-error-container border border-error/20 p-3 rounded-lg text-xs mb-4 flex items-center gap-2 font-medium">
+            <span className="material-symbols-outlined text-sm text-error">error</span>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-outline font-mono uppercase tracking-wider mb-1.5 font-bold">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/40"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-outline font-mono uppercase tracking-wider mb-1.5 font-bold">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/40"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-primary text-on-primary py-2.5 rounded-lg font-semibold text-xs transition-all glow-button disabled:opacity-50 mt-2 flex items-center justify-center gap-1.5"
+          >
+            {loading ? 'Authenticating...' : isLogin ? 'Sign In' : 'Sign Up'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

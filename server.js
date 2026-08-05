@@ -9,7 +9,8 @@ dotenv.config();
 
 import { indexing } from './indexing_phase.js';
 import { chatting } from './query_phase.js';
-import { Session, Message } from './models.js';
+import bcrypt from 'bcryptjs';
+import { User, Session, Message } from './models.js';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -72,16 +73,70 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Veritas AI Backend with MongoDB is running' });
 });
 
-// GET /api/sessions: Retrieve all workspaces
-app.get('/api/sessions', async (req, res) => {
+// Auth Signup Endpoint
+app.post('/api/auth/signup', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ success: false, error: 'Email and password are required' });
+    }
     try {
-        let sessions = await Session.find().sort({ createdAt: -1 });
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ success: false, error: 'Email is already registered' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new User({
+            email,
+            password: hashedPassword
+        });
+        await user.save();
+
+        res.json({ success: true, user: { id: user._id, email: user.email } });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Auth Login Endpoint
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ success: false, error: 'Email and password are required' });
+    }
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ success: false, error: 'Invalid email or password' });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ success: false, error: 'Invalid email or password' });
+        }
+
+        res.json({ success: true, user: { id: user._id, email: user.email } });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// GET /api/sessions: Retrieve all workspaces for the logged-in user
+app.get('/api/sessions', async (req, res) => {
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized: Missing User ID' });
+    }
+
+    try {
+        let sessions = await Session.find({ userId }).sort({ createdAt: -1 });
         if (sessions.length === 0) {
             const sessionId = new mongoose.Types.ObjectId();
             const defaultSession = new Session({
                 _id: sessionId,
+                userId,
                 title: 'General Workspace',
-                pineconeNamespace: `user_default:session_${sessionId.toString()}`,
+                pineconeNamespace: `user_${userId}:session_${sessionId.toString()}`,
                 files: []
             });
             await defaultSession.save();
@@ -101,9 +156,13 @@ app.get('/api/sessions', async (req, res) => {
     }
 });
 
-// POST /api/sessions: Create a new workspace session
+// POST /api/sessions: Create a new workspace session for the logged-in user
 app.post('/api/sessions', async (req, res) => {
+    const userId = req.headers['x-user-id'];
     const { title } = req.body;
+    if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized: Missing User ID' });
+    }
     if (!title) {
         return res.status(400).json({ success: false, error: 'Workspace title is required' });
     }
@@ -112,8 +171,9 @@ app.post('/api/sessions', async (req, res) => {
         const sessionId = new mongoose.Types.ObjectId();
         const newSession = new Session({
             _id: sessionId,
+            userId,
             title: title.trim(),
-            pineconeNamespace: `user_default:session_${sessionId.toString()}`,
+            pineconeNamespace: `user_${userId}:session_${sessionId.toString()}`,
             files: []
         });
         await newSession.save();
@@ -134,11 +194,16 @@ app.post('/api/sessions', async (req, res) => {
 
 // DELETE /api/sessions/:id: Delete workspace, physical files, and database messages
 app.delete('/api/sessions/:id', async (req, res) => {
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized: Missing User ID' });
+    }
+
     try {
         const { id } = req.params;
-        const session = await Session.findById(id);
+        const session = await Session.findOne({ _id: id, userId });
         if (!session) {
-            return res.status(404).json({ success: false, error: 'Workspace not found' });
+            return res.status(404).json({ success: false, error: 'Workspace not found or unauthorized' });
         }
 
         // Delete PDFs physically from disk
@@ -161,10 +226,21 @@ app.delete('/api/sessions/:id', async (req, res) => {
     }
 });
 
-// GET /api/sessions/:id/messages: Fetch chat history
+// GET /api/sessions/:id/messages: Fetch chat history for authorized session
 app.get('/api/sessions/:id/messages', async (req, res) => {
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+        return res.status(401).json({ success: false, error: 'Unauthorized: Missing User ID' });
+    }
+
     try {
-        const messages = await Message.find({ sessionId: req.params.id }).sort({ timestamp: 1 });
+        const { id } = req.params;
+        const session = await Session.findOne({ _id: id, userId });
+        if (!session) {
+            return res.status(404).json({ success: false, error: 'Workspace session not found or unauthorized' });
+        }
+
+        const messages = await Message.find({ sessionId: id }).sort({ timestamp: 1 });
         res.json({ success: true, messages });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
