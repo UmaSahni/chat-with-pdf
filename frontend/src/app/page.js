@@ -83,37 +83,7 @@ function LandingPage({ onLoginSuccess }) {
       <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full bg-primary-fixed-dim/5 blur-[120px] pointer-events-none"></div>
 
-      {/* Dynamic Background SVGs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Animated Network Node Grid SVG */}
-        <svg className="absolute top-[15%] right-[5%] w-[400px] h-[400px] opacity-10 text-primary animate-[spin_120s_linear_infinite]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.5">
-          <circle cx="50" cy="50" r="45" strokeDasharray="3 3" />
-          <circle cx="50" cy="50" r="30" strokeDasharray="2 1" />
-          <line x1="50" y1="5" x2="50" y2="95" />
-          <line x1="5" y1="50" x2="95" y2="50" />
-          <circle cx="50" cy="5" r="2" fill="currentColor" />
-          <circle cx="50" cy="95" r="2" fill="currentColor" />
-          <circle cx="5" cy="50" r="2" fill="currentColor" />
-          <circle cx="95" cy="50" r="2" fill="currentColor" />
-          <circle cx="50" cy="50" r="4" fill="currentColor" />
-        </svg>
 
-        {/* Floating Matrix Dotted SVG Grid */}
-        <svg className="absolute bottom-[20%] left-[8%] w-[300px] h-[300px] opacity-15 text-primary-fixed animate-[pulse_10s_ease-in-out_infinite]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.7">
-          <path d="M10,10 L90,10 M10,30 L90,30 M10,50 L90,50 M10,70 L90,70 M10,90 L90,90" />
-          <path d="M10,10 L10,90 M30,10 L30,90 M50,10 L50,90 M70,10 L70,90 M90,10 L90,90" strokeDasharray="2 2" stroke="currentColor" />
-        </svg>
-
-        {/* Floating Abstract Molecular Structure */}
-        <svg className="absolute top-[45%] left-[45%] w-[150px] h-[150px] opacity-10 text-primary-fixed-dim animate-[bounce_15s_infinite]" viewBox="0 0 100 100" fill="currentColor">
-          <circle cx="20" cy="20" r="5" />
-          <circle cx="80" cy="20" r="5" />
-          <circle cx="50" cy="80" r="5" />
-          <line x1="20" y1="20" x2="80" y2="20" stroke="currentColor" strokeWidth="1" />
-          <line x1="80" y1="20" x2="50" y2="80" stroke="currentColor" strokeWidth="1" />
-          <line x1="50" y1="80" x2="20" y2="20" stroke="currentColor" strokeWidth="1" />
-        </svg>
-      </div>
 
       {/* Landing Header */}
       <header className="px-8 py-6 flex justify-between items-center max-w-7xl mx-auto w-full z-20">
