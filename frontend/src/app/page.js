@@ -2,13 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-const PRESET_QUERIES = [
-  'Summarize risks',
-  'Compare vendor terms',
-  'Extract milestones',
-  'Check compliance'
-];
-
 export default function Home() {
   const [isClient, setIsClient] = useState(false);
   
@@ -264,10 +257,6 @@ export default function Home() {
     }
   };
 
-  const handlePresetClick = (preset) => {
-    handleQuery(preset);
-  };
-
   if (!isClient || !activeSession) {
     return (
       <div className="bg-[#0b1326] h-screen w-screen flex items-center justify-center text-primary font-mono">
@@ -431,19 +420,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Preset Queries suggestions */}
-          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 flex gap-2 z-30 max-w-full overflow-x-auto px-4 py-1">
-            {PRESET_QUERIES.map((preset) => (
-              <button
-                key={preset}
-                onClick={() => handlePresetClick(preset)}
-                className="px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:border-primary hover:text-primary transition-all whitespace-nowrap"
-              >
-                {preset}
-              </button>
-            ))}
           </div>
 
           {/* Prompt Refinement Bar */}
