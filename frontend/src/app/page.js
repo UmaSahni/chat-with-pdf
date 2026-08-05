@@ -754,6 +754,28 @@ function LandingPage({ onLoginSuccess }) {
         </div>
       </main>
 
+      {/* Metrics / Statistics Section */}
+      <section className="max-w-7xl mx-auto w-full px-8 py-12 border-t border-outline-variant/20 z-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="p-4 rounded-xl bg-surface-container-low/10 border border-outline-variant/40">
+            <div className="text-3xl font-black text-primary font-mono tracking-tight">99.8%</div>
+            <div className="text-[10px] text-outline font-mono uppercase tracking-wider mt-1.5">Grounding Accuracy</div>
+          </div>
+          <div className="p-4 rounded-xl bg-surface-container-low/10 border border-outline-variant/40">
+            <div className="text-3xl font-black text-primary font-mono tracking-tight">&lt; 50ms</div>
+            <div className="text-[10px] text-outline font-mono uppercase tracking-wider mt-1.5">Pinecone Retrieval</div>
+          </div>
+          <div className="p-4 rounded-xl bg-surface-container-low/10 border border-outline-variant/40">
+            <div className="text-3xl font-black text-primary font-mono tracking-tight">3,072</div>
+            <div className="text-[10px] text-outline font-mono uppercase tracking-wider mt-1.5">Gemini Dimensions</div>
+          </div>
+          <div className="p-4 rounded-xl bg-surface-container-low/10 border border-outline-variant/40">
+            <div className="text-3xl font-black text-primary font-mono tracking-tight">100%</div>
+            <div className="text-[10px] text-outline font-mono uppercase tracking-wider mt-1.5">Workspace Privacy</div>
+          </div>
+        </div>
+      </section>
+
       {/* Feature Grid */}
       <section className="max-w-7xl mx-auto w-full px-8 py-16 border-t border-outline-variant/30 z-10 bg-[#0b1326]/40 backdrop-blur-sm">
         <div className="text-center max-w-xl mx-auto mb-12">
@@ -785,6 +807,83 @@ function LandingPage({ onLoginSuccess }) {
             <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">Vector Ingestion</h3>
             <p className="text-xs text-outline leading-relaxed">Extract text, create high-dimensional embeddings, and upsert vectors to Pinecone under dedicated namespaces.</p>
           </div>
+        </div>
+      </section>
+
+      {/* RAG Workflow / Pipeline Steps */}
+      <section className="max-w-7xl mx-auto w-full px-8 py-16 border-t border-outline-variant/20 z-10 bg-[#070d1a]/20">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <h2 className="text-2xl font-bold text-on-surface font-mono uppercase tracking-wider">How it works</h2>
+          <p className="text-xs text-outline mt-2">A four-stage semantic processing system.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+          <div className="bg-surface-container-low/20 p-5 rounded-lg border border-outline-variant/50 relative">
+            <div className="absolute top-3 right-3 text-xs font-mono font-bold text-primary/40">01</div>
+            <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs font-mono mb-4">UPL</div>
+            <h4 className="text-xs font-bold text-on-surface mb-2 font-mono">1. Disk Ingestion</h4>
+            <p className="text-[11px] text-outline leading-relaxed">Upload PDFs dynamically to local node storage securely. No third-party cloud costs.</p>
+          </div>
+
+          <div className="bg-surface-container-low/20 p-5 rounded-lg border border-outline-variant/50 relative">
+            <div className="absolute top-3 right-3 text-xs font-mono font-bold text-primary/40">02</div>
+            <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs font-mono mb-4">PAR</div>
+            <h4 className="text-xs font-bold text-on-surface mb-2 font-mono">2. PDF Extraction</h4>
+            <p className="text-[11px] text-outline leading-relaxed">Extract text chunks, tracking coordinates and relative document index coordinates.</p>
+          </div>
+
+          <div className="bg-surface-container-low/20 p-5 rounded-lg border border-outline-variant/50 relative">
+            <div className="absolute top-3 right-3 text-xs font-mono font-bold text-primary/40">03</div>
+            <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs font-mono mb-4">EMB</div>
+            <h4 className="text-xs font-bold text-on-surface mb-2 font-mono">3. 3072 Embeddings</h4>
+            <p className="text-[11px] text-outline leading-relaxed">Vectorize chunks using Google Gemini embeddings and store in Pinecone.</p>
+          </div>
+
+          <div className="bg-surface-container-low/20 p-5 rounded-lg border border-outline-variant/50 relative">
+            <div className="absolute top-3 right-3 text-xs font-mono font-bold text-primary/40">04</div>
+            <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs font-mono mb-4">RET</div>
+            <h4 className="text-xs font-bold text-on-surface mb-2 font-mono">4. Semantic RAG</h4>
+            <p className="text-[11px] text-outline leading-relaxed">Retrieve chunks under a specific workspace, fetch citations, and generate answers.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Accordions / FAQs Section */}
+      <section className="max-w-3xl mx-auto w-full px-8 py-16 border-t border-outline-variant/20 z-10">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold text-on-surface font-mono uppercase tracking-wider">Frequently Asked Questions</h2>
+        </div>
+
+        <div className="space-y-4">
+          <details className="group border border-outline-variant/60 rounded-lg bg-[#0b1326]/50 p-4 transition-all">
+            <summary className="flex justify-between items-center cursor-pointer text-xs font-bold font-mono text-on-surface select-none">
+              <span>Is my PDF data shared with anyone else?</span>
+              <span className="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+            </summary>
+            <p className="text-xs text-outline leading-relaxed mt-3 pt-3 border-t border-outline-variant/30 font-mono">
+              No. Veritas AI enforces database-level user isolation. Workspaces are scoped using a secure `userId` key, and vectors are queried under unique Pinecone namespaces.
+            </p>
+          </details>
+
+          <details className="group border border-outline-variant/60 rounded-lg bg-[#0b1326]/50 p-4 transition-all">
+            <summary className="flex justify-between items-center cursor-pointer text-xs font-bold font-mono text-on-surface select-none">
+              <span>How does the PDF Page link work?</span>
+              <span className="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+            </summary>
+            <p className="text-xs text-outline leading-relaxed mt-3 pt-3 border-t border-outline-variant/30 font-mono">
+              When indexing your file, the system keeps track of the original page number of each block. When a query is answered, clicking the link opens that PDF page directly using standard PDF hashes.
+            </p>
+          </details>
+
+          <details className="group border border-outline-variant/60 rounded-lg bg-[#0b1326]/50 p-4 transition-all">
+            <summary className="flex justify-between items-center cursor-pointer text-xs font-bold font-mono text-on-surface select-none">
+              <span>What models are used?</span>
+              <span className="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+            </summary>
+            <p className="text-xs text-outline leading-relaxed mt-3 pt-3 border-t border-outline-variant/30 font-mono">
+              Veritas AI utilizes `gemini-embedding-001` for embedding vectors and `gemini-3.1-pro-preview` to answer questions securely and accurately.
+            </p>
+          </details>
         </div>
       </section>
 
