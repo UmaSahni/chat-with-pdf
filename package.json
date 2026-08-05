@@ -1,9 +1,13 @@
 {
   "name": "basic-rag",
   "version": "1.0.0",
-  "description": "PDF Enbedding with vector db",
+  "description": "PDF Embedding with vector db",
   "main": "index.js",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "server": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -16,11 +20,21 @@
     "@langchain/pinecone": "^1.0.3",
     "@langchain/textsplitters": "^1.0.1",
     "@pinecone-database/pinecone": "^5.1.2",
+    "cors": "^2.8.5",
     "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "next": "^14.2.5",
     "pdf-parse": "^2.4.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "readline-sync": "^1.4.10"
   },
-"overrides": {
-  "dotenv": "^17.4.2"
-}
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10"
+  },
+  "overrides": {
+    "dotenv": "^17.4.2"
+  }
 }

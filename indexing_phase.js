@@ -8,7 +8,7 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import { PineconeStore } from '@langchain/pinecone';
 
 
-const indexing = async () => {
+export const indexing = async () => {
     const PDF_PATH = './science.pdf';
     const pdfLoader = new PDFLoader(PDF_PATH);
     // Loads the raw PDF
@@ -43,10 +43,8 @@ const indexing = async () => {
     maxConcurrency: 5,
    });
 
-
-
-
-
 }
 
-indexing()
+if (process.argv[1] && (process.argv[1].endsWith('indexing_phase.js') || process.argv[1].endsWith('indexing_phase'))) {
+    indexing();
+}

@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0b1326;
+  --foreground: #dae2fd;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.glass-panel {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(133, 147, 151, 0.2);
+}
+
+.ghost-highlight {
+  background-color: rgba(138, 235, 255, 0.2);
+  border-left: 2px solid #8aebff;
+}
+
+.glow-button {
+  box-shadow: 0 0 15px rgba(138, 235, 255, 0.3);
+}
+
+.glow-button:hover {
+  box-shadow: 0 0 20px rgba(138, 235, 255, 0.5);
+}
+
+/* Layout specific styles */
+.workspace-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr 320px;
+  gap: 1px;
+  background-color: #334155; /* Act as border between panes */
+  height: calc(100vh - 64px); /* Subtract header height */
+  margin-top: 64px;
+}
+
+.pane {
+  background-color: #0b1326;
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+}
+
+.connection-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+}

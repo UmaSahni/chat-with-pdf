@@ -24,12 +24,10 @@ const model = new ChatGoogleGenerativeAI({
     temperature: 0.3,
 });
 
-const chatting = async (question) => {
+export const chatting = async (question) => {
     // Create Enbedding of Question
     const queryVector = await embeddings.embedQuery(question);
     // console.log(queryVector)
-
-
 
     const searchResults = await pineconeIndex.query({
         topK: 10,
@@ -37,13 +35,11 @@ const chatting = async (question) => {
         includeMetadata: true,
     });
 
-
     const context = searchResults.matches
         .map(match => match.metadata.text)
         .join("\n\n---\n\n");
 
     // All relevent data give it to llm
-
 
     // Step 4: Create a prompt template
     const promptTemplate = PromptTemplate.fromTemplate(`
@@ -76,14 +72,19 @@ Answer:
         question: question,
     });
 
-    console.log(answer)
+    return {
+        answer: answer,
+        matches: searchResults.matches
+    };
 }
 
 async function main() {
     const userProblem = readlineSync.question("Ask me anything--> ");
-    await chatting(userProblem);
+    const result = await chatting(userProblem);
+    console.log(result.answer);
     main();
 }
 
-
-main();
+if (process.argv[1] && (process.argv[1].endsWith('query_phase.js') || process.argv[1].endsWith('query_phase'))) {
+    main();
+}

@@ -1,0 +1,387 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Multi-Document Synthesis - Veritas AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#005763",
+                    "on-secondary-fixed-variant": "#2f3aa3",
+                    "on-tertiary-container": "#415062",
+                    "error-container": "#93000a",
+                    "surface-container": "#171f33",
+                    "surface-container-low": "#131b2e",
+                    "secondary-fixed": "#e0e0ff",
+                    "on-primary-fixed": "#001f25",
+                    "surface-container-lowest": "#060e20",
+                    "inverse-primary": "#006877",
+                    "on-secondary-container": "#a8afff",
+                    "surface-container-highest": "#2d3449",
+                    "on-tertiary-fixed-variant": "#39485a",
+                    "outline-variant": "#3c494c",
+                    "on-surface": "#dae2fd",
+                    "on-error-container": "#ffdad6",
+                    "surface-variant": "#2d3449",
+                    "on-background": "#dae2fd",
+                    "on-surface-variant": "#bbc9cd",
+                    "primary-fixed-dim": "#2fd9f4",
+                    "surface-bright": "#31394d",
+                    "secondary-fixed-dim": "#bdc2ff",
+                    "surface-container-high": "#222a3d",
+                    "secondary-container": "#2f3aa3",
+                    "inverse-surface": "#dae2fd",
+                    "primary-fixed": "#a2eeff",
+                    "secondary": "#bdc2ff",
+                    "on-primary": "#00363e",
+                    "inverse-on-surface": "#283044",
+                    "outline": "#859397",
+                    "surface-tint": "#2fd9f4",
+                    "primary": "#8aebff",
+                    "error": "#ffb4ab",
+                    "surface-dim": "#0b1326",
+                    "on-primary-fixed-variant": "#004e5a",
+                    "on-tertiary": "#233143",
+                    "on-secondary-fixed": "#000767",
+                    "on-tertiary-fixed": "#0d1c2d",
+                    "surface": "#0b1326",
+                    "primary-container": "#22d3ee",
+                    "tertiary-container": "#b3c2d8",
+                    "tertiary-fixed": "#d4e4fa",
+                    "tertiary-fixed-dim": "#b9c8de",
+                    "tertiary": "#cfdef4",
+                    "on-secondary": "#131e8c",
+                    "on-error": "#690005",
+                    "background": "#0b1326"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "pane-gap": "1px",
+                    "container-padding": "24px",
+                    "unit": "4px",
+                    "gutter": "12px"
+            },
+            "fontFamily": {
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Inter"
+                    ],
+                    "meta-mono": [
+                            "JetBrains Mono"
+                    ],
+                    "display-lg": [
+                            "Inter"
+                    ],
+                    "headline-sm": [
+                            "Inter"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "data-table": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "meta-mono": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-sm": [
+                            "18px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "data-table": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "500"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(133, 147, 151, 0.2);
+        }
+        .ghost-highlight {
+            background-color: rgba(138, 235, 255, 0.2);
+            border-left: 2px solid #8aebff;
+        }
+        .glow-button {
+            box-shadow: 0 0 15px rgba(138, 235, 255, 0.3);
+        }
+        .glow-button:hover {
+            box-shadow: 0 0 20px rgba(138, 235, 255, 0.5);
+        }
+        
+        /* Layout specific styles */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            gap: var(--spacing-pane-gap);
+            background-color: #334155; /* Acts as the border between panes */
+            height: calc(100vh - 64px); /* Subtract header height */
+            margin-top: 64px;
+        }
+        
+        .pane {
+            background-color: var(--color-background);
+            height: 100%;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Connecting lines container for visual flair */
+        .connection-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md overflow-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface-container-low dark:bg-surface-container-low flex justify-between items-center px-container-padding h-16 w-full fixed top-0 z-50 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<div class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary tracking-tight">Veritas AI</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-surface-variant font-medium pb-1 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Vector Space</a>
+<a class="text-on-surface-variant font-medium pb-1 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Reader</a>
+<a class="text-on-surface-variant font-medium pb-1 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Knowledge Void</a>
+<a class="text-primary font-semibold border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Synthesis</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary text-on-primary px-4 py-2 rounded font-headline-sm text-sm glow-button transition-all">Deploy Agent</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+<img alt="User Analyst Profile" class="w-full h-full object-cover" data-alt="A futuristic UI profile avatar featuring a glowing cyan geometric silhouette of a human head on a deep dark blue grid background. High contrast, sharp edges, professional intelligence analyst aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmrYRQWiqgBSnytgAlx-JV12jfqnm5KliwdRN88Ve5cNZDvUbQrbjDSIa7NEPDYX42aa96HGl9-5n5XAXaPCx1QqB8RDBYVzZm4OjFqwRSfHU57Mtt4Vs3Lg5xpNmfEDpisfFXXzUSDSTJl60yKzL0Q-r5m3DxqBRGjZPigdlrwxj4PsvWP5dXUrRqCT5fehdtd1Gpv53RGSR0ySf1ojYEzsOEJRo7GHBHbrB0RZop3tdWiseqdDFxjw">
+</div>
+</div>
+</header>
+<!-- SideNavBar - Only visible on large screens, integrated into layout if needed, but per prompt we are doing a workspace grid. We will use the workspace grid to organize the Multi-Document view. -->
+<!-- Main Workspace -->
+<main class="workspace-grid">
+<!-- Left Pane: Source Documents -->
+<section class="pane flex flex-col">
+<div class="p-4 border-b border-outline-variant sticky top-0 bg-background z-20 backdrop-blur-md">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">dataset</span>
+                    Active Sources
+                </h2>
+<div class="text-meta-mono font-meta-mono text-outline mt-1">4 Documents Selected</div>
+</div>
+<div class="p-4 flex flex-col gap-4 overflow-y-auto">
+<!-- Source Doc 1 -->
+<div class="glass-panel p-3 rounded-lg relative cursor-pointer hover:border-primary transition-colors group">
+<div class="flex justify-between items-start mb-2">
+<span class="text-meta-mono font-meta-mono text-primary-fixed-dim">DOC-A-449</span>
+<span class="material-symbols-outlined text-outline text-sm" style="font-variation-settings: 'FILL' 0;">visibility</span>
+</div>
+<h3 class="font-body-md text-on-surface font-semibold mb-1">Q3 Market Analysis Rep...</h3>
+<p class="text-meta-mono font-meta-mono text-on-surface-variant text-xs line-clamp-2 mb-2">Detailed breakdown of sector performance and emerging trends in renewable energy.</p>
+<div class="flex items-center gap-2">
+<div class="h-1 flex-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-3/4"></div>
+</div>
+<span class="text-meta-mono font-meta-mono text-primary text-xs">75% Rel</span>
+</div>
+</div>
+<!-- Source Doc 2 -->
+<div class="glass-panel p-3 rounded-lg relative cursor-pointer hover:border-primary transition-colors border-primary ring-1 ring-primary">
+<div class="flex justify-between items-start mb-2">
+<span class="text-meta-mono font-meta-mono text-primary-fixed-dim">DOC-B-112</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">visibility</span>
+</div>
+<h3 class="font-body-md text-on-surface font-semibold mb-1">Competitor Strategy Deck</h3>
+<p class="text-meta-mono font-meta-mono text-on-surface-variant text-xs line-clamp-2 mb-2">Leaked internal presentation outlining expansion plans for APAC region.</p>
+<div class="flex items-center gap-2">
+<div class="h-1 flex-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-full"></div>
+</div>
+<span class="text-meta-mono font-meta-mono text-primary text-xs">99% Rel</span>
+</div>
+</div>
+<!-- Source Doc 3 -->
+<div class="glass-panel p-3 rounded-lg relative cursor-pointer hover:border-primary transition-colors">
+<div class="flex justify-between items-start mb-2">
+<span class="text-meta-mono font-meta-mono text-primary-fixed-dim">DOC-C-887</span>
+<span class="material-symbols-outlined text-outline text-sm" style="font-variation-settings: 'FILL' 0;">visibility</span>
+</div>
+<h3 class="font-body-md text-on-surface font-semibold mb-1">Global Supply Chain Audit</h3>
+<p class="text-meta-mono font-meta-mono text-on-surface-variant text-xs line-clamp-2 mb-2">Risk assessment of critical material shortages expected in Q4.</p>
+<div class="flex items-center gap-2">
+<div class="h-1 flex-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/2"></div>
+</div>
+<span class="text-meta-mono font-meta-mono text-primary text-xs">50% Rel</span>
+</div>
+</div>
+</div>
+<div class="mt-auto p-4 border-t border-outline-variant bg-surface-container">
+<button class="w-full flex items-center justify-center gap-2 py-2 border border-outline-variant rounded text-on-surface-variant hover:text-primary hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0;">add</span>
+                    Add Source
+                </button>
+</div>
+</section>
+<!-- Center Pane: Synthesis Area -->
+<section class="pane flex flex-col relative">
+<div class="p-6 border-b border-outline-variant sticky top-0 bg-background z-20 backdrop-blur-md flex justify-between items-center">
+<div>
+<h1 class="font-headline-md text-headline-md text-on-surface">Synthesis Draft</h1>
+<div class="text-meta-mono font-meta-mono text-primary mt-1 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                        Live Generation
+                    </div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 rounded bg-surface-container-high text-on-surface hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+</button>
+<button class="p-2 rounded bg-surface-container-high text-on-surface hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">download</span>
+</button>
+</div>
+</div>
+<div class="flex-1 p-8 overflow-y-auto relative">
+<!-- SVG lines connecting to side panels theoretically go here, simplified with CSS/HTML structure -->
+<div class="max-w-2xl mx-auto font-body-lg text-body-lg leading-relaxed text-on-surface space-y-6">
+<p class="">Based on the analyzed documents, the strategic outlook for Q4 indicates a significant pivot towards renewable integration, specifically driven by competitor movements in the APAC region.</p>
+<p class="">
+<span class="ghost-highlight px-1 rounded cursor-pointer relative group">
+                            Internal analysis (DOC-A-449) suggests a 15% growth margin if supply chain constraints are mitigated.
+                            <span class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest text-meta-mono text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-outline-variant z-50">View Source Citation</span>
+</span> 
+                        However, the leaked competitor strategy <span class="text-primary cursor-pointer hover:underline">[DOC-B-112]</span> reveals an aggressive pricing model that could undercut current projections.
+                    </p>
+<div class="p-4 border-l-2 border-primary bg-surface-container-low rounded-r-lg my-6 glass-panel">
+<h4 class="font-meta-mono text-meta-mono text-primary mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">psychology</span>
+                            AI Inference
+                        </h4>
+<p class="text-sm">The combination of supply chain risks (DOC-C-887) and competitor APAC expansion (DOC-B-112) presents a high-probability threat to market share in key territories. Recommend immediate recalibration of Q4 logistics.</p>
+</div>
+<p class="">To counter this, immediate diversification of raw material sourcing is required. Current audits <span class="ghost-highlight px-1 rounded cursor-pointer">highlight critical vulnerabilities in the rare-earth metals supply chain</span>, which are essential for the planned Q4 product rollout.</p>
+</div>
+</div>
+<!-- Command Bar -->
+<div class="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-30">
+  <button class="px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:border-primary hover:text-primary transition-all cursor-pointer whitespace-nowrap">Summarize risks</button>
+  <button class="px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:border-primary hover:text-primary transition-all cursor-pointer whitespace-nowrap">Compare vendor terms</button>
+  <button class="px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:border-primary hover:text-primary transition-all cursor-pointer whitespace-nowrap">Extract milestones</button>
+  <button class="px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant text-xs font-medium text-on-surface-variant hover:border-primary hover:text-primary transition-all cursor-pointer whitespace-nowrap">Check compliance</button>
+</div><div class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-surface-container-highest rounded-full px-6 py-3 flex items-center gap-4 shadow-lg border border-outline-variant backdrop-blur-md z-30">
+<input class="bg-transparent border-none text-body-md text-on-surface focus:ring-0 placeholder:text-on-surface-variant w-64" placeholder="Refine synthesis..." type="text">
+<div class="h-6 w-px bg-outline-variant"></div>
+<button class="text-primary hover:text-primary-fixed transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">magic_button</span>
+<span class="font-meta-mono text-xs">Refine</span>
+</button>
+</div>
+</section>
+<!-- Right Pane: Reference Portal -->
+<section class="pane flex flex-col bg-surface-container-lowest">
+<div class="p-4 border-b border-outline-variant sticky top-0 bg-background z-20 backdrop-blur-md">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">library_books</span>
+                    Reference Portal
+                </h2>
+</div>
+<div class="p-4 flex flex-col gap-6 overflow-y-auto">
+<div class="text-meta-mono font-meta-mono text-outline mb-2">Active Snippets</div>
+<!-- Snippet 1 -->
+<div class="glass-panel p-4 rounded-lg relative">
+<div class="absolute -left-3 top-4 w-3 border-t-2 border-primary border-dashed"></div>
+<div class="flex justify-between items-center mb-3">
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-surface-container text-primary text-xs font-meta-mono rounded">DOC-B-112</span>
+<span class="text-xs text-on-surface-variant font-meta-mono">Page 14</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0;">open_in_new</span>
+</button>
+</div>
+<p class="text-sm text-on-surface font-body-md bg-surface-container-low p-2 rounded border border-outline-variant border-l-2 border-l-primary leading-relaxed">
+                        "...APAC expansion is scheduled to commence in early Q4, utilizing a penetrative pricing strategy designed to rapidly acquire market share from established regional incumbents..."
+                    </p>
+</div>
+<!-- Snippet 2 -->
+<div class="glass-panel p-4 rounded-lg relative opacity-50 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="flex justify-between items-center mb-3">
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-surface-container text-outline text-xs font-meta-mono rounded">DOC-C-887</span>
+<span class="text-xs text-on-surface-variant font-meta-mono">Page 4</span>
+</div>
+</div>
+<p class="text-sm text-on-surface font-body-md bg-surface-container-low p-2 rounded border border-outline-variant leading-relaxed">
+                        "Risk of rare-earth element shortage projected at 60% probability by end of year, pending geopolitical stabilization."
+                    </p>
+</div>
+</div>
+</section>
+</main>
+
+
+</body></html>
