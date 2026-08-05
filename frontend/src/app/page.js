@@ -31,127 +31,121 @@ export default function Home() {
   // Right pane details (current active snippets)
   const [activeSnippets, setActiveSnippets] = useState([]);
 
-  // Ensure client-side only execution for localStorage
+  // Ensure client-side only execution and fetch workspaces from MongoDB Atlas
   useEffect(() => {
     setIsClient(true);
-    const savedSessions = localStorage.getItem('veritas_ai_sessions');
-    if (savedSessions) {
-      try {
-        const parsed = JSON.parse(savedSessions);
-        setSessions(parsed);
-        if (parsed.length > 0) {
-          setActiveSessionId(parsed[0].id);
-        }
-      } catch (e) {
-        console.error("Failed to parse sessions", e);
-        initializeDefaultSessions();
-      }
-    } else {
-      initializeDefaultSessions();
-    }
+    fetchSessions();
   }, []);
 
-  const initializeDefaultSessions = () => {
-    const defaultSessions = [
-      {
-        id: 'session_physics_101',
-        name: 'Physics Exam Prep',
-        namespace: 'user_default:session_physics_101',
-        files: [
-          { name: 'science_textbook.pdf', docType: 'textbook', rel: 100 }
-        ],
-        chatHistory: [
-          { 
-            role: 'assistant', 
-            content: 'Hello! I am ready to analyze your Physics materials. Upload your textbooks and question papers, and ask me to cross-reference or solve specific questions.',
-            snippets: []
-          }
-        ]
-      },
-      {
-        id: 'session_law_202',
-        name: 'Laws & Crime Study',
-        namespace: 'user_default:session_law_202',
-        files: [],
-        chatHistory: [
-          { 
-            role: 'assistant', 
-            content: 'Welcome to your Law study workspace. Upload case documents or criminal codes, and ask me to summarize clauses or check compliance.',
-            snippets: []
-          }
-        ]
+  // Fetch workspaces (sessions) from the database
+  const fetchSessions = async () => {
+    try {
+      const res = await fetch('http://localhost:5001/api/sessions');
+      const data = await res.json();
+      if (data.success) {
+        const formatted = data.sessions.map(s => ({
+          id: s._id,
+          name: s.title,
+          namespace: s.pineconeNamespace,
+          files: s.files || [],
+        }));
+        setSessions(formatted);
+        if (formatted.length > 0) {
+          setActiveSessionId(prev => prev || formatted[0].id);
+        }
       }
-    ];
-    setSessions(defaultSessions);
-    setActiveSessionId(defaultSessions[0].id);
-    localStorage.setItem('veritas_ai_sessions', JSON.stringify(defaultSessions));
-  };
-
-  // Helper to persist sessions to local storage
-  const saveSessionsToDisk = (updatedSessions) => {
-    setSessions(updatedSessions);
-    localStorage.setItem('veritas_ai_sessions', JSON.stringify(updatedSessions));
+    } catch (e) {
+      console.error("Failed to fetch sessions from MongoDB Atlas:", e);
+    }
   };
 
   // Get current active session
   const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
 
-  // Update active snippets when active session changes or chat selection changes
+  // Fetch messages (chat log) for the active session when it changes
   useEffect(() => {
-    if (activeSession && activeSession.chatHistory) {
-      const lastMsgWithSnippets = [...activeSession.chatHistory]
-        .reverse()
-        .find(msg => msg.snippets && msg.snippets.length > 0);
-      if (lastMsgWithSnippets) {
-        setActiveSnippets(lastMsgWithSnippets.snippets);
-      } else {
-        setActiveSnippets([]);
-      }
+    if (activeSessionId) {
+      fetchMessages(activeSessionId);
     }
-  }, [activeSessionId, sessions]);
+  }, [activeSessionId]);
 
-  // Create new Session
-  const handleCreateSession = () => {
+  const fetchMessages = async (sessionId) => {
+    try {
+      const res = await fetch(`http://localhost:5001/api/sessions/${sessionId}/messages`);
+      const data = await res.json();
+      if (data.success) {
+        setChatHistory(data.messages);
+        
+        // Populate the Reference Portal with active citations from the last assistant message
+        const lastMsgWithSnippets = [...data.messages]
+          .reverse()
+          .find(msg => msg.role === 'assistant' && msg.snippets && msg.snippets.length > 0);
+        if (lastMsgWithSnippets) {
+          setActiveSnippets(lastMsgWithSnippets.snippets);
+        } else {
+          setActiveSnippets([]);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch messages for session:", e);
+    }
+  };
+
+  // Create new Session in MongoDB Atlas
+  const handleCreateSession = async () => {
     const name = prompt('Enter a name for your new workspace:');
     if (!name || !name.trim()) return;
     
-    const newSessionId = `session_${Date.now()}`;
-    const newSession = {
-      id: newSessionId,
-      name: name.trim(),
-      namespace: `user_default:${newSessionId}`,
-      files: [],
-      chatHistory: [
-        {
-          role: 'assistant',
-          content: `Welcome to your new workspace: "${name}". Upload files and start querying.`,
-          snippets: []
-        }
-      ]
-    };
-    const updated = [...sessions, newSession];
-    saveSessionsToDisk(updated);
-    setActiveSessionId(newSessionId);
-  };
-
-  // Delete Session
-  const handleDeleteSession = (sid, event) => {
-    event.stopPropagation();
-    if (!confirm('Are you sure you want to delete this workspace? All uploaded references and chat history will be lost.')) return;
-    
-    const updated = sessions.filter(s => s.id !== sid);
-    saveSessionsToDisk(updated);
-    if (activeSessionId === sid && updated.length > 0) {
-      setActiveSessionId(updated[0].id);
+    try {
+      const res = await fetch('http://localhost:5001/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: name.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchSessions();
+        setActiveSessionId(data.session._id);
+      }
+    } catch (e) {
+      console.error("Error creating session in database:", e);
     }
   };
 
-  // File Ingestion Handler
+  // Delete Session from MongoDB Atlas
+  const handleDeleteSession = async (sid, event) => {
+    event.stopPropagation();
+    if (!confirm('Are you sure you want to delete this workspace? All uploaded references and chat history will be lost.')) return;
+    
+    try {
+      const res = await fetch(`http://localhost:5001/api/sessions/${sid}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (activeSessionId === sid) {
+          const remaining = sessions.filter(s => s.id !== sid);
+          if (remaining.length > 0) {
+            setActiveSessionId(remaining[0].id);
+          } else {
+            setActiveSessionId('');
+            setChatHistory([]);
+            setActiveSnippets([]);
+          }
+        }
+        await fetchSessions();
+      }
+    } catch (e) {
+      console.error("Error deleting session in database:", e);
+    }
+  };
+
+  // File Ingestion Handler (Uploads to disk, Indexes, and saves metadata to MongoDB)
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    setUploadStatus('Uploading...');
+    setUploadStatus('Uploading PDF...');
     const formData = new FormData();
     formData.append('file', file);
     formData.append('docType', uploadDocType);
@@ -162,28 +156,60 @@ export default function Home() {
         method: 'POST',
         body: formData
       });
-      const data = await res.json();
-      if (data.success) {
-        setUploadStatus('Success!');
-        
-        // Add file to active session files list
-        const updatedFiles = [
-          ...activeSession.files,
-          { name: file.name, docType: uploadDocType, rel: 100 }
-        ];
-        
-        const updatedSessions = sessions.map(s => {
-          if (s.id === activeSessionId) {
-            return { ...s, files: updatedFiles };
+
+      if (!res.body) {
+        throw new Error('Response body stream is not supported');
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let partialChunk = '';
+      let success = false;
+      let errorMessage = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value, { stream: true });
+        const lines = (partialChunk + text).split('\n');
+        partialChunk = lines.pop(); // Hold onto any incomplete line chunk
+
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const data = JSON.parse(line);
+              if (data.success === false) {
+                errorMessage = data.error || 'Indexing failed';
+              } else if (data.step) {
+                success = true;
+                if (data.step === 'parsing') {
+                  setUploadStatus('Extracting PDF...');
+                } else if (data.step === 'chunking') {
+                  setUploadStatus('Splitting text...');
+                } else if (data.step === 'vectorizing') {
+                  setUploadStatus('Embedding (3072)...');
+                } else if (data.step === 'storing') {
+                  setUploadStatus('Saving to Pinecone...');
+                } else if (data.step === 'done') {
+                  setUploadStatus('Success!');
+                }
+              }
+            } catch (e) {
+              console.error("Progress JSON parse error:", e);
+            }
           }
-          return s;
-        });
-        
-        saveSessionsToDisk(updatedSessions);
+        }
+      }
+
+      if (success && !errorMessage) {
+        setUploadStatus('Success!');
+        // Refresh session list to show newly uploaded files
+        await fetchSessions();
         setTimeout(() => setUploadStatus(''), 3000);
       } else {
         setUploadStatus('Failed');
-        alert('File upload failed: ' + (data.error || 'Unknown error'));
+        alert('File upload failed: ' + (errorMessage || 'Unknown error'));
       }
     } catch (err) {
       console.error(err);
@@ -192,22 +218,14 @@ export default function Home() {
     }
   };
 
-  // Core Query RAG execution
+  // Core Query RAG execution (Queries Pinecone and logs conversation in MongoDB)
   const handleQuery = async (queryText) => {
     if (!queryText.trim() || isProcessing) return;
     setIsProcessing(true);
 
-    // Add user message to history
-    const userMsg = { role: 'user', content: queryText };
-    const updatedHistoryWithUser = [...activeSession.chatHistory, userMsg];
-    
-    let updatedSessions = sessions.map(s => {
-      if (s.id === activeSessionId) {
-        return { ...s, chatHistory: updatedHistoryWithUser };
-      }
-      return s;
-    });
-    saveSessionsToDisk(updatedSessions);
+    // Add user message to local state immediately for instant UI responsiveness
+    const tempUserMsg = { role: 'user', content: queryText, timestamp: new Date() };
+    setChatHistory(prev => [...prev, tempUserMsg]);
     setQuestion('');
 
     try {
@@ -222,30 +240,8 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.success) {
-        // Format snippets for reference portal
-        const snippets = (data.matches || []).map((match, i) => ({
-          docId: match.metadata.source_name || 'Document',
-          page: match.metadata.page_number || i + 1,
-          text: match.metadata.text || 'No snippet text.'
-        }));
-
-        const botMsg = { 
-          role: 'assistant', 
-          content: data.answer,
-          snippets: snippets
-        };
-
-        updatedSessions = sessions.map(s => {
-          if (s.id === activeSessionId) {
-            return { 
-              ...s, 
-              chatHistory: [...updatedHistoryWithUser, botMsg] 
-            };
-          }
-          return s;
-        });
-        saveSessionsToDisk(updatedSessions);
-        setActiveSnippets(snippets);
+        // Sync message list directly from MongoDB Atlas (includes assistant answer and citations)
+        await fetchMessages(activeSessionId);
       } else {
         alert('Error: ' + (data.error || 'Server failed to query RAG'));
       }

@@ -8,13 +8,12 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import { PineconeStore } from '@langchain/pinecone';
 
 
-export const indexing = async (fileBuffer, fileName, docType, namespace, onProgress = () => {}) => {
+export const indexing = async (filePath, fileName, docType, namespace, onProgress = () => {}) => {
     let rawDocs;
-    if (fileBuffer) {
+    if (filePath) {
         onProgress('parsing');
-        // Load PDF from buffer (Node Blob)
-        const blob = new Blob([fileBuffer], { type: 'application/pdf' });
-        const pdfLoader = new PDFLoader(blob);
+        // Load PDF from disk path using standard PDFLoader
+        const pdfLoader = new PDFLoader(filePath);
         rawDocs = await pdfLoader.load();
     } else {
         // Fallback for direct CLI execution
