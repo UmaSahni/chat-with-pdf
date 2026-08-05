@@ -619,7 +619,7 @@ function LandingPage({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = 'visible';
     document.documentElement.style.overflow = 'auto';
     return () => {
       document.body.style.overflow = 'hidden';
