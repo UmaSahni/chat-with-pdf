@@ -307,6 +307,14 @@ export default function Home() {
     );
   }
 
+  if (!activeSession) {
+    return (
+      <div className="bg-[#0b1326] h-screen w-screen flex items-center justify-center text-primary font-mono">
+        Loading workspaces...
+      </div>
+    );
+  }
+
   return (
     <div className="bg-background text-on-surface font-body text-sm h-screen overflow-hidden flex flex-col">
       {/* TopNavBar */}
