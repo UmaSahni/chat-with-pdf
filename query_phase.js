@@ -39,7 +39,7 @@ export const chatting = async (question, namespace = 'default', fileFilter = nul
     }
 
     // Query strictly within the requested user/session namespace
-    console.log(`Querying namespace "${namespace}" with filter:`, docTypeFilter || 'none');
+    console.log(`Querying namespace "${namespace}" with filter:`, fileFilter || 'none');
     const searchResults = await pineconeIndex.namespace(namespace).query(queryOptions);
 
     const context = searchResults.matches
