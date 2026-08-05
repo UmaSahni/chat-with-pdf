@@ -300,7 +300,7 @@ export default function Home() {
 
   if (!currentUser) {
     return (
-      <AuthPage onLoginSuccess={(user) => {
+      <LandingPage onLoginSuccess={(user) => {
         localStorage.setItem('veritas_user', JSON.stringify(user));
         setCurrentUser(user);
       }} />
@@ -610,7 +610,8 @@ export default function Home() {
   );
 }
 
-function AuthPage({ onLoginSuccess }) {
+function LandingPage({ onLoginSuccess }) {
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -649,74 +650,226 @@ function AuthPage({ onLoginSuccess }) {
   };
 
   return (
-    <div className="bg-[#0b1326] h-screen w-screen flex items-center justify-center font-body text-sm relative overflow-hidden">
-      {/* Background gradients */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-[120px]"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-primary-fixed-dim/10 blur-[120px]"></div>
+    <div className="bg-[#0b1326] min-h-screen text-on-surface font-body overflow-x-hidden relative flex flex-col justify-between">
+      {/* Dynamic background mesh */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/5 blur-[120px] animate-pulse pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary-fixed-dim/5 blur-[120px] animate-pulse pointer-events-none"></div>
 
-      <div className="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl relative z-10 border border-outline-variant/60 animate-fade-in bg-[#0b1326]/80 backdrop-blur-md">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-primary tracking-tight">Veritas AI</h2>
-          <p className="text-xs text-outline mt-1 font-mono uppercase tracking-wider">Multi-Document RAG workspace</p>
+      {/* Landing Header */}
+      <header className="px-8 py-6 flex justify-between items-center max-w-7xl mx-auto w-full z-20">
+        <div className="flex items-center gap-3">
+          <div className="text-xl font-black text-primary tracking-wider font-mono">VERITAS AI</div>
+          <span className="px-2 py-0.5 border border-primary/20 text-[9px] font-mono text-primary/80 rounded uppercase">v2.0</span>
+        </div>
+        <button
+          onClick={() => { setIsLogin(true); setError(''); setShowAuthModal(true); }}
+          className="px-5 py-2 border border-outline-variant hover:border-primary text-xs font-semibold text-on-surface hover:text-primary rounded-full transition-all bg-surface-container-low/30 backdrop-blur"
+        >
+          Sign In
+        </button>
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-8 py-12 flex flex-col lg:flex-row items-center gap-12 z-10">
+        <div className="flex-1 space-y-6 text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary font-mono animate-fade-in">
+            <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+            Grounded Multi-Document RAG
+          </div>
+          
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-on-surface leading-tight tracking-tight">
+            Connect the dots in your <span className="bg-gradient-to-r from-primary via-primary-fixed to-primary-fixed-dim bg-clip-text text-transparent">PDF documents</span>
+          </h1>
+          
+          <p className="text-sm sm:text-base text-outline leading-relaxed max-w-xl">
+            Veritas AI transforms textbooks, research notes, and manuals into an interactive, context-aware dialogue engine. Harness enterprise-grade vector indexing to ground answers with page-level citations.
+          </p>
+
+          <div className="flex flex-wrap gap-4 pt-4">
+            <button
+              onClick={() => { setIsLogin(false); setError(''); setShowAuthModal(true); }}
+              className="px-6 py-3 bg-primary text-on-primary font-bold text-xs rounded-full shadow-lg glow-button hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              Launch Workspace
+            </button>
+            <a
+              href="#sandbox"
+              className="px-6 py-3 border border-outline-variant hover:border-outline text-xs font-bold text-on-surface hover:bg-surface-container-low/30 rounded-full transition-all flex items-center gap-1.5"
+            >
+              Interactive Sandbox
+            </a>
+          </div>
         </div>
 
-        {/* Tab switchers */}
-        <div className="flex bg-surface-container rounded-lg p-1 mb-6 border border-outline-variant">
-          <button
-            onClick={() => { setIsLogin(true); setError(''); }}
-            className={`flex-1 py-2 text-xs font-semibold rounded transition-all ${isLogin ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => { setIsLogin(false); setError(''); }}
-            className={`flex-1 py-2 text-xs font-semibold rounded transition-all ${!isLogin ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
-          >
-            Create Account
-          </button>
+        {/* Live RAG Mockup Sandbox */}
+        <div id="sandbox" className="flex-1 w-full max-w-xl animate-fade-in">
+          <div className="glass-panel border border-outline-variant/60 rounded-xl overflow-hidden shadow-2xl bg-[#0b1326]/60 backdrop-blur-md">
+            {/* Header bar */}
+            <div className="bg-surface-container-low border-b border-outline-variant px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></span>
+              </div>
+              <span className="text-[10px] font-mono text-outline">RAG-PLAYGROUND.DEV</span>
+              <span className="w-4"></span>
+            </div>
+
+            {/* Sandbox Content */}
+            <div className="p-5 space-y-4 font-mono text-[11px] leading-relaxed">
+              {/* Question */}
+              <div className="space-y-1">
+                <div className="text-primary font-bold">USER_QUESTION &gt;</div>
+                <div className="bg-surface-container-low p-3 rounded border border-outline-variant text-on-surface-variant">
+                  Compare SAP and HCM tool expertise of candidates.
+                </div>
+              </div>
+
+              {/* Citations */}
+              <div className="space-y-1">
+                <div className="text-primary-fixed-dim font-bold">GROUNDED_SOURCES &gt;</div>
+                <div className="flex gap-2">
+                  <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 text-[9px] rounded text-primary flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[10px]">link</span>
+                    Profile (1).pdf [Page 1]
+                  </span>
+                  <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 text-[9px] rounded text-primary flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[10px]">link</span>
+                    Profile (2).pdf [Page 1]
+                  </span>
+                </div>
+              </div>
+
+              {/* Bot Response */}
+              <div className="space-y-1 pt-1">
+                <div className="text-primary font-bold">VERITAS_RESPONSE &gt;</div>
+                <div className="bg-surface-container-high p-4 rounded-lg border border-outline-variant border-l-2 border-l-primary text-on-surface leading-relaxed whitespace-pre-line">
+                  Candidate <span className="text-primary font-bold">Babaiah Cheppali</span> exhibits strong expertise in SAP, holding over 16 years of consulting experience with SAP HCM and SuccessFactors (SF). 
+                  
+                  By contrast, candidate <span className="text-primary font-bold">Alice</span> specializes primarily in React frontend systems, containing no SAP/HCM background.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Feature Grid */}
+      <section className="max-w-7xl mx-auto w-full px-8 py-16 border-t border-outline-variant/30 z-10 bg-[#0b1326]/40 backdrop-blur-sm">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <h2 className="text-2xl font-bold text-on-surface font-mono uppercase tracking-wider">Built for Deep Research</h2>
+          <p className="text-xs text-outline mt-2">Grounding large language models with complete document authority.</p>
         </div>
 
-        {error && (
-          <div className="bg-error-container text-on-error-container border border-error/20 p-3 rounded-lg text-xs mb-4 flex items-center gap-2 font-medium">
-            <span className="material-symbols-outlined text-sm text-error">error</span>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-outline font-mono uppercase tracking-wider mb-1.5 font-bold">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/40"
-              required
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur hover:translate-y-[-2px]">
+            <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">lock</span>
+            <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">Isolated Workspaces</h3>
+            <p className="text-xs text-outline leading-relaxed">Accounts are completely isolated in MongoDB Atlas. One user can never see or search another's workspaces.</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-outline font-mono uppercase tracking-wider mb-1.5 font-bold">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/40"
-              required
-            />
+          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur hover:translate-y-[-2px]">
+            <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">find_in_page</span>
+            <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">Source Page Citations</h3>
+            <p className="text-xs text-outline leading-relaxed">Every answer is backed by a citation card. Click to open the physical PDF page directly in a new tab.</p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary text-on-primary py-2.5 rounded-lg font-semibold text-xs transition-all glow-button disabled:opacity-50 mt-2 flex items-center justify-center gap-1.5"
-          >
-            {loading ? 'Authenticating...' : isLogin ? 'Sign In' : 'Sign Up'}
-          </button>
-        </form>
-      </div>
+          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur hover:translate-y-[-2px]">
+            <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">filter_list</span>
+            <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">PDF Document Filters</h3>
+            <p className="text-xs text-outline leading-relaxed">Scope query parameters instantly. Target a specific PDF or query across all files concurrently.</p>
+          </div>
+
+          <div className="glass-panel p-6 rounded-xl border border-outline-variant/60 hover:border-primary/50 transition-all group bg-[#0b1326]/50 backdrop-blur hover:translate-y-[-2px]">
+            <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">analytics</span>
+            <h3 className="text-sm font-bold text-on-surface mt-4 mb-2">Vector Ingestion</h3>
+            <p className="text-xs text-outline leading-relaxed">Extract text, create high-dimensional embeddings, and upsert vectors to Pinecone under dedicated namespaces.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Landing Footer */}
+      <footer className="px-8 py-6 border-t border-outline-variant/30 flex justify-between items-center max-w-7xl mx-auto w-full text-[10px] font-mono text-outline z-20">
+        <div>VERITAS AI &copy; 2026. ALL RIGHTS RESERVED.</div>
+        <div>POWERED BY GEMINI & PINECONE</div>
+      </footer>
+
+      {/* Auth Modal Overlay */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#0b1326]/95 border border-outline-variant rounded-xl p-8 w-full max-w-md shadow-2xl relative z-[101]">
+            {/* Close button */}
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              <span className="material-symbols-outlined text-base">close</span>
+            </button>
+
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold text-primary tracking-tight font-mono">VERITAS AI</h2>
+              <p className="text-[10px] text-outline mt-1 font-mono uppercase tracking-wider">Access your Grounded Workspace</p>
+            </div>
+
+            {/* Tab switchers */}
+            <div className="flex bg-surface-container rounded-lg p-1 mb-6 border border-outline-variant">
+              <button
+                onClick={() => { setIsLogin(true); setError(''); }}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded transition-all ${isLogin ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setIsLogin(false); setError(''); }}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded transition-all ${!isLogin ? 'bg-primary text-on-primary shadow' : 'text-on-surface-variant hover:text-on-surface'}`}
+              >
+                Create Account
+              </button>
+            </div>
+
+            {error && (
+              <div className="bg-error-container text-on-error-container border border-error/20 p-3 rounded-lg text-xs mb-4 flex items-center gap-2 font-medium">
+                <span className="material-symbols-outlined text-sm text-error">error</span>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-semibold text-outline font-mono uppercase tracking-wider mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/40"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-outline font-mono uppercase tracking-wider mb-1.5">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/40"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-primary text-on-primary py-2.5 rounded-lg font-semibold text-xs transition-all glow-button disabled:opacity-50 mt-2 flex items-center justify-center gap-1.5"
+              >
+                {loading ? 'Authenticating...' : isLogin ? 'Sign In' : 'Sign Up'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
