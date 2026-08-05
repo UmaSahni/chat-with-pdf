@@ -199,7 +199,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 
 // Query / QA Endpoint with Namespace, Metadata Filter, and DB logging support
 app.post('/api/query', async (req, res) => {
-    const { question, namespace, docTypeFilter } = req.body;
+    const { question, namespace, fileFilter } = req.body;
     if (!question) {
         return res.status(400).json({ success: false, error: 'Question is required' });
     }
@@ -212,8 +212,8 @@ app.post('/api/query', async (req, res) => {
             return res.status(404).json({ success: false, error: 'Workspace session not found' });
         }
 
-        console.log(`Processing query: "${question}" in namespace: "${ns}", filter: "${docTypeFilter || 'none'}"`);
-        const result = await chatting(question, ns, docTypeFilter);
+        console.log(`Processing query: "${question}" in namespace: "${ns}", fileFilter: "${fileFilter || 'none'}"`);
+        const result = await chatting(question, ns, fileFilter);
         
         // Format snippets for MongoDB logging
         const snippets = (result.matches || []).map(m => ({

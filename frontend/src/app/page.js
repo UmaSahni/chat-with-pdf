@@ -10,7 +10,7 @@ export default function Home() {
   const [activeSessionId, setActiveSessionId] = useState('');
   
   // active filter state
-  const [docTypeFilter, setDocTypeFilter] = useState('all'); // all, textbook, question_paper
+  const [selectedFileFilter, setSelectedFileFilter] = useState('all'); // all, or a specific filename
   
   // File upload state
   const [uploadDocType, setUploadDocType] = useState('textbook');
@@ -239,7 +239,7 @@ export default function Home() {
         body: JSON.stringify({
           question: queryText,
           namespace: activeSession.namespace,
-          docTypeFilter: docTypeFilter
+          fileFilter: selectedFileFilter
         })
       });
       const data = await res.json();
@@ -426,13 +426,16 @@ export default function Home() {
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-surface-container-highest rounded-full px-5 py-2.5 flex items-center gap-3 shadow-lg border border-outline-variant backdrop-blur-md z-30 w-11/12 max-w-xl">
             {/* Filter Toggle */}
             <select
-              value={docTypeFilter}
-              onChange={(e) => setDocTypeFilter(e.target.value)}
-              className="bg-transparent border-none text-xs text-primary font-mono focus:outline-none focus:ring-0 mr-1"
+              value={selectedFileFilter}
+              onChange={(e) => setSelectedFileFilter(e.target.value)}
+              className="bg-transparent border-none text-xs text-primary font-mono focus:outline-none focus:ring-0 mr-1 max-w-[155px] truncate"
             >
               <option value="all">Filter: All Docs</option>
-              <option value="textbook">Filter: References Only</option>
-              <option value="question_paper">Filter: Questions Only</option>
+              {activeSession?.files?.map((file, idx) => (
+                <option key={idx} value={file.name}>
+                  {file.name}
+                </option>
+              ))}
             </select>
             <div className="h-4 w-px bg-outline-variant"></div>
             

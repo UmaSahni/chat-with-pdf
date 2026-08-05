@@ -24,7 +24,7 @@ const model = new ChatGoogleGenerativeAI({
     temperature: 0.3,
 });
 
-export const chatting = async (question, namespace = 'default', docTypeFilter = null) => {
+export const chatting = async (question, namespace = 'default', fileFilter = null) => {
     // Create Embedding of Question (Dimension: 3072)
     const queryVector = await embeddings.embedQuery(question);
 
@@ -34,8 +34,8 @@ export const chatting = async (question, namespace = 'default', docTypeFilter = 
         vector: queryVector,
         includeMetadata: true
     };
-    if (docTypeFilter && docTypeFilter !== 'all') {
-        queryOptions.filter = { document_type: { "$eq": docTypeFilter } };
+    if (fileFilter && fileFilter !== 'all') {
+        queryOptions.filter = { source_name: { "$eq": fileFilter } };
     }
 
     // Query strictly within the requested user/session namespace
