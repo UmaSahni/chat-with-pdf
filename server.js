@@ -175,7 +175,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
         };
 
         console.log(`Saving upload to disk: "${req.file.path}". Target namespace: "${namespace}", docType: "${docType}"`);
-        await indexing(req.file.path, req.file.originalname, docType || 'general', namespace, sendProgress);
+        await indexing(req.file.path, req.file.filename, docType || 'general', namespace, sendProgress);
         
         // Push file details into MongoDB Session model
         session.files.push({

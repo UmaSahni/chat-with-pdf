@@ -479,11 +479,22 @@ export default function Home() {
                 <div className="absolute -left-3 top-4 w-3 border-t-2 border-primary border-dashed"></div>
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-surface-container text-primary text-xs font-mono rounded max-w-[120px] truncate" title={snip.docId}>
-                      {snip.docId}
+                    <span className="px-2 py-0.5 bg-surface-container text-primary text-xs font-mono rounded max-w-[150px] truncate" title={snip.docId.replace(/^\d+-/, '')}>
+                      {snip.docId.replace(/^\d+-/, '')}
                     </span>
                     <span className="text-xs text-on-surface-variant font-mono">Page {snip.page}</span>
                   </div>
+                  {snip.docId && snip.docId !== 'Document' && (
+                    <a
+                      href={`http://localhost:5001/uploads/${snip.docId}#page=${snip.page}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary-fixed transition-colors flex items-center p-1 rounded hover:bg-surface-container-high"
+                      title="Open PDF at this page"
+                    >
+                      <span className="material-symbols-outlined text-sm">open_in_new</span>
+                    </a>
+                  )}
                 </div>
                 <p className="text-xs text-on-surface font-mono bg-surface-container-low p-2 rounded border border-outline-variant border-l-2 border-l-primary leading-relaxed whitespace-pre-wrap">
                   {snip.text}
