@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const PRESET_QUERIES = [
   'Summarize risks',
@@ -10,107 +10,264 @@ const PRESET_QUERIES = [
 ];
 
 export default function Home() {
-  const [sources, setSources] = useState([
-    { id: 'DOC-A-449', name: 'Q3 Market Analysis Report', desc: 'Detailed breakdown of sector performance and emerging trends in renewable energy.', rel: 75, active: false },
-    { id: 'DOC-B-112', name: 'Competitor Strategy Deck', desc: 'Leaked internal presentation outlining expansion plans for APAC region.', rel: 99, active: true },
-    { id: 'DOC-C-887', name: 'Global Supply Chain Audit', desc: 'Risk assessment of critical material shortages expected in Q4.', rel: 50, active: false },
-    { id: 'science.pdf', name: 'science.pdf (Local PDF)', desc: 'Active document indexed in vector database.', rel: 100, active: true }
-  ]);
+  const [isClient, setIsClient] = useState(false);
+  
+  // App states
+  const [sessions, setSessions] = useState([]);
+  const [activeSessionId, setActiveSessionId] = useState('');
+  
+  // active filter state
+  const [docTypeFilter, setDocTypeFilter] = useState('all'); // all, textbook, question_paper
+  
+  // File upload state
+  const [uploadDocType, setUploadDocType] = useState('textbook');
+  const [uploadStatus, setUploadStatus] = useState('');
+  const fileInputRef = useRef(null);
 
-  const [activeSnippets, setActiveSnippets] = useState([
-    {
-      docId: 'DOC-B-112',
-      page: 14,
-      text: '"...APAC expansion is scheduled to commence in early Q4, utilizing a penetrative pricing strategy designed to rapidly acquire market share from established regional incumbents..."'
-    },
-    {
-      docId: 'DOC-C-887',
-      page: 4,
-      text: '"Risk of rare-earth element shortage projected at 60% probability by end of year, pending geopolitical stabilization."'
-    }
-  ]);
-
-  const [draftText, setDraftText] = useState(
-    'Based on the analyzed documents, the strategic outlook for Q4 indicates a significant pivot towards renewable integration, specifically driven by competitor movements in the APAC region.\n\nInternal analysis (DOC-A-449) suggests a 15% growth margin if supply chain constraints are mitigated. However, the leaked competitor strategy (DOC-B-112) reveals an aggressive pricing model that could undercut current projections.'
-  );
-
-  const [aiInference, setAiInference] = useState(
-    'The combination of supply chain risks (DOC-C-887) and competitor APAC expansion (DOC-B-112) presents a high-probability threat to market share in key territories. Recommend immediate recalibration of Q4 logistics.'
-  );
-
+  // Chat inputs
   const [question, setQuestion] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [indexingStatus, setIndexingStatus] = useState('');
+  
+  // Right pane details (current active snippets)
+  const [activeSnippets, setActiveSnippets] = useState([]);
 
-  // Call Express RAG API
+  // Ensure client-side only execution for localStorage
+  useEffect(() => {
+    setIsClient(true);
+    const savedSessions = localStorage.getItem('veritas_ai_sessions');
+    if (savedSessions) {
+      try {
+        const parsed = JSON.parse(savedSessions);
+        setSessions(parsed);
+        if (parsed.length > 0) {
+          setActiveSessionId(parsed[0].id);
+        }
+      } catch (e) {
+        console.error("Failed to parse sessions", e);
+        initializeDefaultSessions();
+      }
+    } else {
+      initializeDefaultSessions();
+    }
+  }, []);
+
+  const initializeDefaultSessions = () => {
+    const defaultSessions = [
+      {
+        id: 'session_physics_101',
+        name: 'Physics Exam Prep',
+        namespace: 'user_default:session_physics_101',
+        files: [
+          { name: 'science_textbook.pdf', docType: 'textbook', rel: 100 }
+        ],
+        chatHistory: [
+          { 
+            role: 'assistant', 
+            content: 'Hello! I am ready to analyze your Physics materials. Upload your textbooks and question papers, and ask me to cross-reference or solve specific questions.',
+            snippets: []
+          }
+        ]
+      },
+      {
+        id: 'session_law_202',
+        name: 'Laws & Crime Study',
+        namespace: 'user_default:session_law_202',
+        files: [],
+        chatHistory: [
+          { 
+            role: 'assistant', 
+            content: 'Welcome to your Law study workspace. Upload case documents or criminal codes, and ask me to summarize clauses or check compliance.',
+            snippets: []
+          }
+        ]
+      }
+    ];
+    setSessions(defaultSessions);
+    setActiveSessionId(defaultSessions[0].id);
+    localStorage.setItem('veritas_ai_sessions', JSON.stringify(defaultSessions));
+  };
+
+  // Helper to persist sessions to local storage
+  const saveSessionsToDisk = (updatedSessions) => {
+    setSessions(updatedSessions);
+    localStorage.setItem('veritas_ai_sessions', JSON.stringify(updatedSessions));
+  };
+
+  // Get current active session
+  const activeSession = sessions.find(s => s.id === activeSessionId) || sessions[0];
+
+  // Update active snippets when active session changes or chat selection changes
+  useEffect(() => {
+    if (activeSession && activeSession.chatHistory) {
+      const lastMsgWithSnippets = [...activeSession.chatHistory]
+        .reverse()
+        .find(msg => msg.snippets && msg.snippets.length > 0);
+      if (lastMsgWithSnippets) {
+        setActiveSnippets(lastMsgWithSnippets.snippets);
+      } else {
+        setActiveSnippets([]);
+      }
+    }
+  }, [activeSessionId, sessions]);
+
+  // Create new Session
+  const handleCreateSession = () => {
+    const name = prompt('Enter a name for your new workspace:');
+    if (!name || !name.trim()) return;
+    
+    const newSessionId = `session_${Date.now()}`;
+    const newSession = {
+      id: newSessionId,
+      name: name.trim(),
+      namespace: `user_default:${newSessionId}`,
+      files: [],
+      chatHistory: [
+        {
+          role: 'assistant',
+          content: `Welcome to your new workspace: "${name}". Upload files and start querying.`,
+          snippets: []
+        }
+      ]
+    };
+    const updated = [...sessions, newSession];
+    saveSessionsToDisk(updated);
+    setActiveSessionId(newSessionId);
+  };
+
+  // Delete Session
+  const handleDeleteSession = (sid, event) => {
+    event.stopPropagation();
+    if (!confirm('Are you sure you want to delete this workspace? All uploaded references and chat history will be lost.')) return;
+    
+    const updated = sessions.filter(s => s.id !== sid);
+    saveSessionsToDisk(updated);
+    if (activeSessionId === sid && updated.length > 0) {
+      setActiveSessionId(updated[0].id);
+    }
+  };
+
+  // File Ingestion Handler
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setUploadStatus('Uploading...');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('docType', uploadDocType);
+    formData.append('namespace', activeSession.namespace);
+
+    try {
+      const res = await fetch('http://localhost:5001/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUploadStatus('Success!');
+        
+        // Add file to active session files list
+        const updatedFiles = [
+          ...activeSession.files,
+          { name: file.name, docType: uploadDocType, rel: 100 }
+        ];
+        
+        const updatedSessions = sessions.map(s => {
+          if (s.id === activeSessionId) {
+            return { ...s, files: updatedFiles };
+          }
+          return s;
+        });
+        
+        saveSessionsToDisk(updatedSessions);
+        setTimeout(() => setUploadStatus(''), 3000);
+      } else {
+        setUploadStatus('Failed');
+        alert('File upload failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error(err);
+      setUploadStatus('Error');
+      alert('Error connecting to backend server. Ensure Express is running on http://localhost:5001');
+    }
+  };
+
+  // Core Query RAG execution
   const handleQuery = async (queryText) => {
-    if (!queryText.trim()) return;
+    if (!queryText.trim() || isProcessing) return;
     setIsProcessing(true);
+
+    // Add user message to history
+    const userMsg = { role: 'user', content: queryText };
+    const updatedHistoryWithUser = [...activeSession.chatHistory, userMsg];
+    
+    let updatedSessions = sessions.map(s => {
+      if (s.id === activeSessionId) {
+        return { ...s, chatHistory: updatedHistoryWithUser };
+      }
+      return s;
+    });
+    saveSessionsToDisk(updatedSessions);
+    setQuestion('');
+
     try {
       const res = await fetch('http://localhost:5001/api/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: queryText })
+        body: JSON.stringify({
+          question: queryText,
+          namespace: activeSession.namespace,
+          docTypeFilter: docTypeFilter
+        })
       });
       const data = await res.json();
       if (data.success) {
-        setDraftText(data.answer);
-        
-        // Update inference block
-        if (data.answer.includes("I don't have enough information")) {
-          setAiInference('No conclusive AI Inference can be drawn from the current document context for this query.');
-        } else {
-          setAiInference(`Synthesized reasoning based on the query: "${queryText}". The models retrieved highly relevant context chunks from the source document to formulate this answer.`);
-        }
+        // Format snippets for reference portal
+        const snippets = (data.matches || []).map((match, i) => ({
+          docId: match.metadata.source_name || 'Document',
+          page: match.metadata.page_number || i + 1,
+          text: match.metadata.text || 'No snippet text.'
+        }));
 
-        // Update active snippets from matches
-        if (data.matches && data.matches.length > 0) {
-          const formattedSnippets = data.matches.slice(0, 3).map((match, index) => ({
-            docId: 'science.pdf',
-            page: index + 1, // mock page since langchain pdf parser output might split
-            text: match.metadata.text || 'No text content available.'
-          }));
-          setActiveSnippets(formattedSnippets);
-        } else {
-          setActiveSnippets([]);
-        }
+        const botMsg = { 
+          role: 'assistant', 
+          content: data.answer,
+          snippets: snippets
+        };
+
+        updatedSessions = sessions.map(s => {
+          if (s.id === activeSessionId) {
+            return { 
+              ...s, 
+              chatHistory: [...updatedHistoryWithUser, botMsg] 
+            };
+          }
+          return s;
+        });
+        saveSessionsToDisk(updatedSessions);
+        setActiveSnippets(snippets);
       } else {
-        alert('Query failed: ' + (data.error || 'Unknown error'));
+        alert('Error: ' + (data.error || 'Server failed to query RAG'));
       }
     } catch (err) {
       console.error(err);
-      alert('Error connecting to backend server. Make sure the Express server is running on http://localhost:5001');
+      alert('Network error connecting to Express API.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Trigger PDF Indexing
-  const handleIndexPDF = async () => {
-    setIndexingStatus('Indexing...');
-    try {
-      const res = await fetch('http://localhost:5001/api/index', {
-        method: 'POST'
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIndexingStatus('Success!');
-        setTimeout(() => setIndexingStatus(''), 3000);
-      } else {
-        setIndexingStatus('Failed');
-        alert('Indexing failed: ' + (data.error || 'Unknown error'));
-      }
-    } catch (err) {
-      console.error(err);
-      setIndexingStatus('Error');
-      alert('Error connecting to backend server. Make sure the Express server is running on http://localhost:5001');
-    }
-  };
-
   const handlePresetClick = (preset) => {
-    setQuestion(preset);
     handleQuery(preset);
   };
+
+  if (!isClient || !activeSession) {
+    return (
+      <div className="bg-[#0b1326] h-screen w-screen flex items-center justify-center text-primary font-mono">
+        Loading Veritas AI Workspaces...
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background text-on-surface font-body text-sm h-screen overflow-hidden flex flex-col">
@@ -118,30 +275,44 @@ export default function Home() {
       <header className="bg-surface-container-low flex justify-between items-center px-container-padding h-16 w-full fixed top-0 z-50 backdrop-blur-md border-b border-outline-variant">
         <div className="flex items-center gap-8">
           <div className="text-lg font-bold text-primary tracking-tight">Veritas AI</div>
-          <nav className="hidden md:flex items-center gap-6">
-            <span className="text-on-surface-variant font-medium pb-1 hover:text-primary transition-colors duration-200 cursor-pointer">Vector Space</span>
-            <span className="text-on-surface-variant font-medium pb-1 hover:text-primary transition-colors duration-200 cursor-pointer">Reader</span>
-            <span className="text-on-surface-variant font-medium pb-1 hover:text-primary transition-colors duration-200 cursor-pointer">Knowledge Void</span>
-            <span className="text-primary font-semibold border-b-2 border-primary pb-1 hover:text-primary transition-colors duration-200 cursor-pointer">Synthesis</span>
-          </nav>
+          <div className="text-xs text-outline bg-surface-container px-3 py-1 rounded border border-outline-variant font-mono">
+            Active Workspace: <span className="text-primary-fixed">{activeSession.name}</span>
+          </div>
         </div>
         <div className="flex items-center gap-4">
-          <button 
-            onClick={handleIndexPDF} 
-            disabled={indexingStatus === 'Indexing...'}
-            className="bg-primary text-on-primary px-4 py-2 rounded font-semibold text-xs glow-button transition-all disabled:opacity-50"
-          >
-            {indexingStatus || 'Sync local PDF'}
-          </button>
+          {/* File upload triggers */}
+          <div className="flex items-center gap-2">
+            <select 
+              value={uploadDocType} 
+              onChange={(e) => setUploadDocType(e.target.value)}
+              className="bg-surface-container border border-outline-variant text-xs text-on-surface rounded px-2 py-1.5 focus:outline-none"
+            >
+              <option value="textbook">Textbook</option>
+              <option value="question_paper">Question Paper</option>
+              <option value="general">General PDF</option>
+            </select>
+            <input 
+              type="file" 
+              accept=".pdf" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              className="hidden" 
+            />
+            <button 
+              onClick={() => fileInputRef.current.click()} 
+              disabled={uploadStatus === 'Uploading...'}
+              className="bg-primary text-on-primary px-3 py-1.5 rounded font-semibold text-xs glow-button transition-all disabled:opacity-50 flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-xs">upload_file</span>
+              {uploadStatus || 'Upload PDF'}
+            </button>
+          </div>
           <button className="text-on-surface-variant hover:text-primary transition-colors">
             <span className="material-symbols-outlined align-middle">settings</span>
           </button>
-          <button className="text-on-surface-variant hover:text-primary transition-colors">
-            <span className="material-symbols-outlined align-middle">help</span>
-          </button>
           <div className="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
             <div className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-xs font-bold text-on-primary-container">
-              AI
+              US
             </div>
           </div>
         </div>
@@ -149,106 +320,114 @@ export default function Home() {
 
       {/* Main Workspace Grid */}
       <main className="workspace-grid flex-1">
-        {/* Left Pane: Source Documents */}
+        {/* Left Pane: Sessions and Sources */}
         <section className="pane flex flex-col border-r border-outline-variant">
-          <div className="p-4 border-b border-outline-variant sticky top-0 bg-background z-20 backdrop-blur-md">
-            <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-lg">dataset</span>
-              Active Sources
-            </h2>
-            <div className="text-xs text-outline mt-1 font-mono">{sources.length} Documents Available</div>
-          </div>
-          
-          <div className="p-4 flex flex-col gap-4 overflow-y-auto flex-1">
-            {sources.map((src) => (
-              <div 
-                key={src.id} 
-                className={`glass-panel p-3 rounded cursor-pointer hover:border-primary transition-colors relative group ${src.active ? 'border-primary ring-1 ring-primary' : ''}`}
+          {/* Workspace Switcher */}
+          <div className="p-4 border-b border-outline-variant bg-surface-container-low">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xs font-bold text-outline font-mono uppercase tracking-wider">Workspaces</h2>
+              <button 
+                onClick={handleCreateSession}
+                className="text-primary hover:text-primary-fixed transition-colors flex items-center gap-0.5 text-xs font-semibold"
               >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-mono text-primary-fixed-dim">{src.id}</span>
-                  <span className="material-symbols-outlined text-outline text-sm">
-                    {src.active ? 'visibility' : 'visibility_off'}
+                <span className="material-symbols-outlined text-xs">add_box</span>
+                New
+              </button>
+            </div>
+            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+              {sessions.map((s) => (
+                <div 
+                  key={s.id}
+                  onClick={() => setActiveSessionId(s.id)}
+                  className={`flex justify-between items-center px-3 py-1.5 rounded cursor-pointer transition-colors text-xs font-medium ${s.id === activeSessionId ? 'bg-surface-container-high border border-primary text-primary' : 'text-on-surface-variant hover:bg-surface-container-low'}`}
+                >
+                  <span className="truncate">{s.name}</span>
+                  <button 
+                    onClick={(e) => handleDeleteSession(s.id, e)}
+                    className="opacity-0 group-hover:opacity-100 hover:text-error text-outline transition-opacity"
+                  >
+                    <span className="material-symbols-outlined text-xs">delete</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Sources */}
+          <div className="p-4 border-b border-outline-variant">
+            <h2 className="text-xs font-bold text-outline font-mono uppercase tracking-wider mb-2">Session Sources</h2>
+            <div className="text-xs text-on-surface-variant mb-2">
+              Files uploaded to this specific workspace:
+            </div>
+          </div>
+
+          <div className="p-4 flex flex-col gap-3 overflow-y-auto flex-1">
+            {activeSession.files.map((file, idx) => (
+              <div 
+                key={idx} 
+                className="glass-panel p-2.5 rounded border-l-2 border-l-primary relative group"
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-[10px] font-mono bg-surface-container-high text-primary px-1.5 py-0.5 rounded uppercase">
+                    {file.docType}
                   </span>
                 </div>
-                <h3 className="font-semibold text-on-surface mb-1 truncate">{src.name}</h3>
-                <p className="text-xs text-on-surface-variant line-clamp-2 mb-2">{src.desc}</p>
-                <div className="flex items-center gap-2">
-                  <div className="h-1 flex-1 bg-surface-container-high rounded-full overflow-hidden">
-                    <div className="h-full bg-primary" style={{ width: `${src.rel}%` }}></div>
-                  </div>
-                  <span className="text-xs font-mono text-primary">{src.rel}% Rel</span>
-                </div>
+                <h3 className="font-semibold text-on-surface text-xs truncate" title={file.name}>
+                  {file.name}
+                </h3>
               </div>
             ))}
-          </div>
-          
-          <div className="p-4 border-t border-outline-variant bg-surface-container mt-auto">
-            <button 
-              onClick={handleIndexPDF}
-              className="w-full flex items-center justify-center gap-2 py-2 border border-outline-variant rounded text-on-surface-variant hover:text-primary hover:border-primary transition-colors text-xs font-semibold"
-            >
-              <span className="material-symbols-outlined text-sm">add</span>
-              Re-Index Source PDF
-            </button>
+
+            {activeSession.files.length === 0 && (
+              <div className="text-xs text-outline italic text-center py-6">
+                No documents uploaded. Upload a textbook or question paper to start.
+              </div>
+            )}
           </div>
         </section>
 
-        {/* Center Pane: Synthesis Area */}
+        {/* Center Pane: Synthesis / Chat Area */}
         <section className="pane flex flex-col border-r border-outline-variant relative">
-          <div className="p-6 border-b border-outline-variant sticky top-0 bg-background z-20 backdrop-blur-md flex justify-between items-center">
+          <div className="p-6 border-b border-outline-variant bg-background/50 backdrop-blur-md flex justify-between items-center z-10">
             <div>
               <h1 className="text-lg font-bold text-on-surface">Synthesis Draft</h1>
-              <div className="text-xs text-primary mt-1 flex items-center gap-2">
+              <div className="text-xs text-primary mt-1 flex items-center gap-2 font-mono">
                 <span className={`w-2 h-2 rounded-full bg-primary ${isProcessing ? 'animate-ping' : 'animate-pulse'}`}></span>
-                {isProcessing ? 'Thinking...' : 'Live Generation'}
+                {isProcessing ? 'COMPUTING RAG...' : 'ACTIVE GROUNDING INTERACTION'}
               </div>
-            </div>
-            <div className="flex gap-2">
-              <button className="p-2 rounded bg-surface-container-high text-on-surface hover:text-primary transition-colors">
-                <span className="material-symbols-outlined text-sm">history</span>
-              </button>
-              <button 
-                onClick={() => {
-                  const blob = new Blob([draftText], { type: 'text/plain' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'synthesis_draft.txt';
-                  a.click();
-                }}
-                className="p-2 rounded bg-surface-container-high text-on-surface hover:text-primary transition-colors"
-                title="Download Draft"
-              >
-                <span className="material-symbols-outlined text-sm">download</span>
-              </button>
             </div>
           </div>
           
-          {/* Main Draft Area */}
-          <div className="flex-1 p-8 overflow-y-auto pb-40">
-            <div className="max-w-2xl mx-auto space-y-6 text-base leading-relaxed text-on-surface">
-              {draftText.split('\n\n').map((para, i) => (
-                <p key={i} className="whitespace-pre-line">
-                  {para}
-                </p>
+          {/* Messages Scroll Area */}
+          <div className="flex-1 p-8 overflow-y-auto pb-44 space-y-6">
+            <div className="max-w-2xl mx-auto space-y-6">
+              {activeSession.chatHistory.map((msg, i) => (
+                <div 
+                  key={i} 
+                  className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                >
+                  <div 
+                    className={`max-w-xl px-4 py-3 rounded-lg leading-relaxed text-sm ${msg.role === 'user' ? 'bg-primary-container text-on-primary-container border border-primary' : 'bg-surface-container border border-outline-variant text-on-surface'}`}
+                  >
+                    <div className="text-[10px] font-mono text-outline mb-1 uppercase">
+                      {msg.role === 'user' ? 'Query' : 'Veritas Synth'}
+                    </div>
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  </div>
+                </div>
               ))}
-
-              {/* AI Inference Banner */}
-              {aiInference && (
-                <div className="p-4 border-l-2 border-primary bg-surface-container-low rounded-r glass-panel my-6">
-                  <h4 className="text-xs font-mono text-primary mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">psychology</span>
-                    AI Inference
-                  </h4>
-                  <p className="text-sm text-on-surface">{aiInference}</p>
+              {isProcessing && (
+                <div className="flex flex-col items-start">
+                  <div className="max-w-xl px-4 py-3 rounded-lg bg-surface-container-low border border-outline-variant text-outline animate-pulse text-xs font-mono">
+                    GENERATING ANSWER GROUNDED IN NAMESPACE "{activeSession.namespace}"...
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Preset Command suggestions */}
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-30 max-w-full overflow-x-auto px-4 py-1">
+          {/* Preset Queries suggestions */}
+          <div className="absolute bottom-28 left-1/2 -translate-x-1/2 flex gap-2 z-30 max-w-full overflow-x-auto px-4 py-1">
             {PRESET_QUERIES.map((preset) => (
               <button
                 key={preset}
@@ -260,8 +439,20 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Query Bar */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-surface-container-highest rounded-full px-6 py-3 flex items-center gap-4 shadow-lg border border-outline-variant backdrop-blur-md z-30 w-11/12 max-w-xl">
+          {/* Prompt Refinement Bar */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-surface-container-highest rounded-full px-5 py-2.5 flex items-center gap-3 shadow-lg border border-outline-variant backdrop-blur-md z-30 w-11/12 max-w-xl">
+            {/* Filter Toggle */}
+            <select
+              value={docTypeFilter}
+              onChange={(e) => setDocTypeFilter(e.target.value)}
+              className="bg-transparent border-none text-xs text-primary font-mono focus:outline-none focus:ring-0 mr-1"
+            >
+              <option value="all">Filter: All</option>
+              <option value="textbook">Filter: Books Only</option>
+              <option value="question_paper">Filter: Exam Papers</option>
+            </select>
+            <div className="h-4 w-px bg-outline-variant"></div>
+            
             <input
               type="text"
               value={question}
@@ -271,7 +462,7 @@ export default function Home() {
               }}
               disabled={isProcessing}
               className="bg-transparent border-none text-sm text-on-surface focus:outline-none focus:ring-0 placeholder:text-on-surface-variant flex-1"
-              placeholder={isProcessing ? 'Waiting for response...' : 'Refine synthesis...'}
+              placeholder={isProcessing ? 'Processing query...' : 'Ask workspace RAG...'}
             />
             <div className="h-6 w-px bg-outline-variant"></div>
             <button
@@ -295,21 +486,18 @@ export default function Home() {
           </div>
           
           <div className="p-4 flex flex-col gap-6 overflow-y-auto flex-1">
-            <div className="text-xs text-outline font-mono mb-2 uppercase">Active Snippets ({activeSnippets.length})</div>
+            <div className="text-xs text-outline font-mono mb-2 uppercase">Active Citations ({activeSnippets.length})</div>
             
             {activeSnippets.map((snip, index) => (
               <div key={index} className="glass-panel p-4 rounded relative">
                 <div className="absolute -left-3 top-4 w-3 border-t-2 border-primary border-dashed"></div>
-                <div className="flex justify-between items-center mb-3">
+                <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-surface-container text-primary text-xs font-mono rounded">
+                    <span className="px-2 py-0.5 bg-surface-container text-primary text-xs font-mono rounded max-w-[120px] truncate" title={snip.docId}>
                       {snip.docId}
                     </span>
                     <span className="text-xs text-on-surface-variant font-mono">Page {snip.page}</span>
                   </div>
-                  <button className="text-on-surface-variant hover:text-primary transition-colors">
-                    <span className="material-symbols-outlined text-sm">open_in_new</span>
-                  </button>
                 </div>
                 <p className="text-xs text-on-surface font-mono bg-surface-container-low p-2 rounded border border-outline-variant border-l-2 border-l-primary leading-relaxed whitespace-pre-wrap">
                   {snip.text}
@@ -318,8 +506,8 @@ export default function Home() {
             ))}
 
             {activeSnippets.length === 0 && (
-              <div className="text-xs text-on-surface-variant italic text-center mt-8">
-                No active source snippets referenced. Submit a query to see grounded context citations.
+              <div className="text-xs text-outline italic text-center py-12">
+                No citations referenced. Ask a question to fetch matching textbook/page coordinates.
               </div>
             )}
           </div>

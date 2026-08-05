@@ -11,7 +11,8 @@ import { RunnableSequence } from '@langchain/core/runnables';
 
 const embeddings = new GoogleGenerativeAIEmbeddings({
     apiKey: process.env.GEMINI_API_KEY,
-    model: 'gemini-embedding-001',
+    model: 'text-embedding-004',
+    outputDimensionality: 3072,
 });
 
 // Then search the enbedding in Vector DB
@@ -24,16 +25,23 @@ const model = new ChatGoogleGenerativeAI({
     temperature: 0.3,
 });
 
-export const chatting = async (question) => {
-    // Create Enbedding of Question
+export const chatting = async (question, namespace = 'default', docTypeFilter = null) => {
+    // Create Embedding of Question (Dimension: 3072)
     const queryVector = await embeddings.embedQuery(question);
-    // console.log(queryVector)
 
-    const searchResults = await pineconeIndex.query({
+    // Build the metadata filter object if a filter is active
+    const queryOptions = {
         topK: 10,
         vector: queryVector,
-        includeMetadata: true,
-    });
+        includeMetadata: true
+    };
+    if (docTypeFilter && docTypeFilter !== 'all') {
+        queryOptions.filter = { document_type: { "$eq": docTypeFilter } };
+    }
+
+    // Query strictly within the requested user/session namespace
+    console.log(`Querying namespace "${namespace}" with filter:`, docTypeFilter || 'none');
+    const searchResults = await pineconeIndex.namespace(namespace).query(queryOptions);
 
     const context = searchResults.matches
         .map(match => match.metadata.text)
