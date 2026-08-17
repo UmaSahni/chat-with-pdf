@@ -361,7 +361,7 @@ function LandingPage({ onLoginSuccess }) {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               <div>
                 <label className="block text-[10px] font-semibold text-outline font-mono uppercase tracking-wider mb-1.5">Email Address</label>
                 <input
@@ -371,6 +371,7 @@ function LandingPage({ onLoginSuccess }) {
                   placeholder="you@example.com"
                   className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/40"
                   required
+                  autoComplete="off"
                 />
               </div>
 
@@ -383,6 +384,7 @@ function LandingPage({ onLoginSuccess }) {
                   placeholder="••••••••"
                   className="w-full bg-surface-container border border-outline-variant text-on-surface text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary placeholder:text-outline/40"
                   required
+                  autoComplete="new-password"
                 />
               </div>
 

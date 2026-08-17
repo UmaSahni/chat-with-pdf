@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const fileInputRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   // Chat inputs
   const [question, setQuestion] = useState('');
@@ -113,6 +114,11 @@ export default function Dashboard() {
       console.error("Failed to fetch messages for session:", e);
     }
   };
+
+  // Scroll to bottom of chat when message list updates or processing state changes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory, isProcessing]);
 
   // Create new Session in MongoDB Atlas
   const handleCreateSession = () => {
@@ -291,6 +297,42 @@ export default function Dashboard() {
     }
   };
 
+  // Helper to highlight terms from the user's last query inside the text chunks
+  const highlightText = (text) => {
+    if (!text) return '';
+    const lastUserMessage = [...chatHistory]
+      .reverse()
+      .find(msg => msg.role === 'user');
+    
+    if (!lastUserMessage || !lastUserMessage.content) return text;
+    
+    // Clean and split the query into keywords (min 3 chars, filtering out common stopwords)
+    const stopWords = new Set(['and', 'the', 'for', 'you', 'this', 'that', 'with', 'from', 'have', 'how', 'can', 'are', 'what', 'not', 'but', 'why', 'who', 'where', 'when', 'will', 'your', 'their']);
+    const queryWords = lastUserMessage.content
+      .toLowerCase()
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !stopWords.has(word));
+    
+    if (queryWords.length === 0) return text;
+    
+    // Escape regex characters
+    const escapedWords = queryWords.map(word => word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+    const pattern = new RegExp(`\\b(${escapedWords.join('|')})\\b`, 'gi');
+    
+    const parts = text.split(pattern);
+    if (parts.length === 1) return text;
+    
+    return parts.map((part, idx) => {
+      const isMatch = queryWords.includes(part.toLowerCase());
+      return isMatch ? (
+        <mark key={idx} className="bg-primary/20 text-primary font-bold px-1 rounded shadow-sm border border-primary/20 select-text">
+          {part}
+        </mark>
+      ) : part;
+    });
+  };
+
   if (!isClient || !currentUser) {
     return (
       <div className="bg-[#0b1326] h-screen w-screen flex items-center justify-center text-primary font-mono animate-pulse">
@@ -323,15 +365,6 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           {/* File upload triggers */}
           <div className="flex items-center gap-2">
-            <select 
-              value={uploadDocType} 
-              onChange={(e) => setUploadDocType(e.target.value)}
-              className="bg-surface-container border border-outline-variant text-xs text-on-surface rounded px-2 py-1.5 focus:outline-none"
-            >
-              <option value="textbook">Reference Material</option>
-              <option value="question_paper">Question/Task Sheet</option>
-              <option value="general">General Document</option>
-            </select>
             <input 
               type="file" 
               accept=".pdf" 
@@ -453,7 +486,7 @@ export default function Dashboard() {
           </div>
 
           {/* Chat message display area */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto px-6 pt-6 pb-28 space-y-6">
             {chatHistory.map((msg, i) => (
               <div 
                 key={i} 
@@ -474,21 +507,7 @@ export default function Dashboard() {
                   <p className="whitespace-pre-line">{msg.content}</p>
                 </div>
                 
-                {/* Grounding citation tags in bot responses */}
-                {msg.role === 'assistant' && msg.snippets && msg.snippets.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2 px-1">
-                    {msg.snippets.map((snip, idx) => (
-                      <span 
-                        key={idx} 
-                        className="px-2 py-0.5 bg-primary/10 border border-primary/20 text-[9px] font-mono rounded text-primary flex items-center gap-1 select-none"
-                        title={snip.docId}
-                      >
-                        <span className="material-symbols-outlined text-[10px]">link</span>
-                        {snip.docId.replace(/^\d+-/, '')} (Page {snip.page})
-                      </span>
-                    ))}
-                  </div>
-                )}
+
               </div>
             ))}
             
@@ -502,23 +521,34 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Prompt Refinement Bar */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-surface-container-highest rounded-full px-5 py-2.5 flex items-center gap-3 shadow-lg border border-outline-variant backdrop-blur-md z-30 w-11/12 max-w-xl">
-            {/* Filter Toggle */}
-            <select
-              value={selectedFileFilter}
-              onChange={(e) => setSelectedFileFilter(e.target.value)}
-              className="bg-transparent border-none text-xs text-primary font-mono focus:outline-none focus:ring-0 mr-1 max-w-[155px] truncate"
+            <button
+              onClick={() => fileInputRef.current.click()}
+              disabled={uploadStatus === 'Uploading...'}
+              className="text-primary hover:text-primary-fixed hover:scale-105 active:scale-95 transition-all flex items-center justify-center p-1 rounded-full hover:bg-surface-container-high disabled:opacity-50"
+              title={uploadStatus || 'Upload PDF'}
             >
-              <option value="all">Filter: All Docs</option>
-              {activeSession?.files?.map((file, idx) => (
-                <option key={idx} value={file.name}>
-                  {file.name}
-                </option>
-              ))}
-            </select>
+              <span className="material-symbols-outlined text-lg">upload_file</span>
+            </button>
+            <div className="relative flex items-center">
+              <select
+                value={selectedFileFilter}
+                onChange={(e) => setSelectedFileFilter(e.target.value)}
+                className="appearance-none bg-surface-container border border-outline-variant text-[11px] text-primary font-mono rounded-full pl-3 pr-7 py-1 focus:outline-none focus:border-primary max-w-[150px] truncate cursor-pointer transition-all hover:bg-surface-container-high"
+              >
+                <option value="all" className="bg-[#0b1326] text-on-surface">All Docs</option>
+                {activeSession?.files?.map((file, idx) => (
+                  <option key={idx} value={file.name} className="bg-[#0b1326] text-on-surface">
+                    {file.name}
+                  </option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined text-[12px] text-primary absolute right-2.5 pointer-events-none select-none">keyboard_arrow_down</span>
+            </div>
             <div className="h-4 w-px bg-outline-variant"></div>
             
             <input
@@ -584,8 +614,8 @@ export default function Dashboard() {
                     </a>
                   )}
                 </div>
-                <p className="text-xs text-on-surface font-mono bg-surface-container-low p-2 rounded border border-outline-variant border-l-2 border-l-primary leading-relaxed whitespace-pre-wrap">
-                  {snip.text}
+                <p className="text-xs text-on-surface bg-surface-container-low p-3 rounded-lg border border-outline-variant border-l-2 border-l-primary leading-relaxed whitespace-pre-wrap">
+                  {highlightText(snip.text)}
                 </p>
               </div>
             ))}
