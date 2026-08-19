@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+
 export default function Dashboard() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
@@ -59,7 +61,7 @@ export default function Dashboard() {
   const fetchSessions = async () => {
     if (!currentUser) return;
     try {
-      const res = await fetch('http://localhost:5001/api/sessions', {
+      const res = await fetch(`${API_BASE_URL}/api/sessions`, {
         headers: { 'x-user-id': currentUser.id }
       });
       const data = await res.json();
@@ -93,7 +95,7 @@ export default function Dashboard() {
   const fetchMessages = async (sessionId) => {
     if (!currentUser) return;
     try {
-      const res = await fetch(`http://localhost:5001/api/sessions/${sessionId}/messages`, {
+      const res = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}/messages`, {
         headers: { 'x-user-id': currentUser.id }
       });
       const data = await res.json();
@@ -131,7 +133,7 @@ export default function Dashboard() {
     if (!newWorkspaceName || !newWorkspaceName.trim() || !currentUser) return;
 
     try {
-      const res = await fetch('http://localhost:5001/api/sessions', {
+      const res = await fetch(`${API_BASE_URL}/api/sessions`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -157,7 +159,7 @@ export default function Dashboard() {
     if (!confirm('Are you sure you want to delete this workspace? All uploaded references and chat history will be lost.') || !currentUser) return;
     
     try {
-      const res = await fetch(`http://localhost:5001/api/sessions/${sid}`, {
+      const res = await fetch(`${API_BASE_URL}/api/sessions/${sid}`, {
         method: 'DELETE',
         headers: { 'x-user-id': currentUser.id }
       });
@@ -192,7 +194,7 @@ export default function Dashboard() {
     formData.append('namespace', activeSession.namespace);
 
     try {
-      const res = await fetch('http://localhost:5001/api/upload', {
+      const res = await fetch(`${API_BASE_URL}/api/upload`, {
         method: 'POST',
         headers: { 'x-user-id': currentUser.id },
         body: formData
@@ -255,7 +257,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error(err);
       setUploadStatus('Error');
-      alert('Error connecting to backend server. Ensure Express is running on http://localhost:5001');
+      alert('Error connecting to backend server. Ensure the API server is running.');
     }
   };
 
@@ -270,7 +272,7 @@ export default function Dashboard() {
     setQuestion('');
 
     try {
-      const res = await fetch('http://localhost:5001/api/query', {
+      const res = await fetch(`${API_BASE_URL}/api/query`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -604,7 +606,7 @@ export default function Dashboard() {
                   </div>
                   {snip.docId && snip.docId !== 'Document' && (
                     <a
-                      href={`http://localhost:5001/uploads/${snip.docId}#page=${snip.page}`}
+                      href={`${API_BASE_URL}/uploads/${snip.docId}#page=${snip.page}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary-fixed transition-colors flex items-center p-1 rounded hover:bg-surface-container-high"

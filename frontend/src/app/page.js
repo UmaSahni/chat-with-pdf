@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+
 export default function Home() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
@@ -55,7 +57,7 @@ function LandingPage({ onLoginSuccess }) {
     setError('');
     setLoading(true);
 
-    const url = isLogin ? 'http://localhost:5001/api/auth/login' : 'http://localhost:5001/api/auth/signup';
+    const url = isLogin ? `${API_BASE_URL}/api/auth/login` : `${API_BASE_URL}/api/auth/signup`;
 
     try {
       const res = await fetch(url, {
@@ -71,7 +73,7 @@ function LandingPage({ onLoginSuccess }) {
       }
     } catch (err) {
       console.error(err);
-      setError('Connection error. Is Express running on port 5001?');
+      setError('Connection error. Is the API server running?');
     } finally {
       setLoading(false);
     }
