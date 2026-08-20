@@ -1,7 +1,7 @@
 const https = require('https');
 
 const urls = [
-  'https://chat-with-pdf-backend-t6z9.onrender.com/api/health',
+  'https://chat-with-pdf-backend-bm9m.onrender.com/api/health',
   'https://chat-with-pdf-frontend-kwwf.onrender.com'
 ];
 

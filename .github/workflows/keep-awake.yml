@@ -1,0 +1,15 @@
+name: Keep Render Services Awake
+on:
+  schedule:
+    - cron: '*/10 * * * *' # Runs every 10 minutes
+  workflow_dispatch:      # Allows manual triggering
+
+jobs:
+  keep-awake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Frontend Service
+        run: curl -I -s -o /dev/null -w "%{http_code}" https://chat-with-pdf-frontend-kwwf.onrender.com
+
+      - name: Ping Backend Service
+        run: curl -I -s -o /dev/null -w "%{http_code}" https://chat-with-pdf-backend-bm9m.onrender.com/api/health
