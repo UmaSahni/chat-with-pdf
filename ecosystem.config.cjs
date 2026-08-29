@@ -16,7 +16,7 @@ module.exports = {
     {
       name: 'rag-frontend',
       script: 'npm',
-      args: 'run start -- -p 3000',
+      args: 'run start -- -H 0.0.0.0 -p 3000',
       cwd: `${__dirname}/frontend`,
       instances: 1,
       autorestart: true,
@@ -28,3 +28,4 @@ module.exports = {
     }
   ]
 };
+
